@@ -24,7 +24,7 @@ export default class ListaCompraComponent {
   private readonly compraService = inject(CompraService);
   public compras$ = this.compraService.todasListas();
 
-  add(id: number): void {
+  editar(id: number): void {
    void this.router.navigate(['compras/form/editar/', id,]);
   }
 }

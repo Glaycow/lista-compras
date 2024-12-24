@@ -9,6 +9,13 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'itens/compra',
+    loadChildren: () => import('./itens/itens-compra.routes').then(m => m.routes),
+    data: {
+      title: 'Itens'
+    }
+  },
+  {
     path: '',
     redirectTo: 'compras',
     pathMatch: 'full'
