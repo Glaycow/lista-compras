@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import {Component, inject} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import Aura from '@primeng/themes/aura';
 import {PrimeNG} from 'primeng/config';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrl: './app.component.scss',
+  providers: [TranslateService]
 })
 export class AppComponent {
   title = 'listaCompras';
@@ -22,6 +24,21 @@ export class AppComponent {
         },
         darkModeSelector: false,
       }
-    })
+    });
+    this.primeng.setTranslation({
+      accept: 'Aceitar',
+      reject: 'Rejeitar',
+      dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+      dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+      dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+      monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+      monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+      today: 'Hoje',
+      clear: 'Limpar',
+      dateFormat: 'dd/mm/yy',
+      weekHeader: 'Wk',
+      firstDayOfWeek: 0,
+    });
   }
+
 }

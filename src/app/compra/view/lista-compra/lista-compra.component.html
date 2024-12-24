@@ -1,24 +1,44 @@
-<p-data-view #dv [value]="compras$()">
-  <ng-template #list let-compras>
-    <div class="grid grid-cols-12 gap-4 grid-nogutter">
-      @for (compra of compras; track compra.id; let first = $first) {
-        <div class="col-span-12">
-          <div class="flex p-4 gap-4" [ngClass]="{ 'border-t border-surface-200 dark:border-surface-700': !first }">
-           <div class="flex flex-col justify-around">
-             <p> {{compra.nome}}</p>
-             <p>  {{compra.data | date : 'dd/mm/YYYY'}} </p>
-           </div>
-            <div class="flex-1 justify-items-end">
-              <div class="flex flex-col gap-4">
-                <p-button icon="pi pi-search" severity="success" />
-                <p-button icon="pi pi-search" severity="success" />
+<p-card>
+  <p-data-view #dv [value]="compras$()">
+    <ng-template #header>
+      <div class="flex flex-row justify-between items-center">
+        <h1>Compra</h1>
+        <p-button
+          icon="pi pi-plus"
+          [rounded]="true"
+          severity="success"
+          routerLink="/compras/form/novo"
+        />
+      </div>
+    </ng-template>
+    <ng-template #list let-compras>
+      <div class="grid grid-cols-12 gap-4 grid-nogutter">
+        @for (compra of compras; track compra.id; let first = $first) {
+          <div class="col-span-12">
+            <div class="flex p-4 gap-4" [ngClass]="{ 'border-t border-surface-200 dark:border-surface-700': !first }">
+              <div class="flex flex-col justify-around">
+                <p> {{compra.nome}}</p>
+                <p>  {{compra.data | date : 'dd/MM/YYYY'}} </p>
+              </div>
+              <div class="flex-1 justify-items-end">
+                <div class="flex flex-col gap-4">
+                  <p-button
+                    icon="pi pi-pencil"
+                    [rounded]="true"
+                    severity="success"
+                    (onClick)="add(compra.id)"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    severity="danger"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      }
-    </div>
-  </ng-template>
-</p-data-view>
-<pre>{{compras$() | json}} - compras</pre>
-<p-button label="Add" (onClick)="add()" />
+        }
+      </div>
+    </ng-template>
+  </p-data-view>
+</p-card>

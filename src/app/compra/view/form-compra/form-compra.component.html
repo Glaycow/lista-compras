@@ -1,0 +1,41 @@
+<p-card>
+  <form [formGroup]="formulario">
+    <div class="flex flex-col gap-8">
+      <p-floatlabel variant="on">
+        <p-datepicker
+          formControlName="data"
+          inputId="data"
+          showIcon
+          iconDisplay="input"
+          styleClass="w-full"
+        />
+        <label for="data">Data</label>
+      </p-floatlabel>
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="nome"
+          formControlName="nome"
+          autocomplete="off"
+          class="w-full"
+        />
+        <label for="nome">Nome</label>
+      </p-floatlabel>
+      <div class="flex flex-row gap-8 justify-center">
+        <p-button
+          label="Salvar"
+          [raised]="true"
+          severity="success"
+          (onClick)="salvar()"
+          [disabled]="!formulario.valid"
+        />
+        <p-button
+          label="voltar"
+          [raised]="true"
+          severity="secondary"
+          routerLink="/.."
+        />
+      </div>
+    </div>
+  </form>
+</p-card>

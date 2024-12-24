@@ -25,4 +25,26 @@ export class CompraService {
         })
       );
   }
+
+  public remover(id: number): Observable<unknown> {
+    return this.dbService.delete('compra', id)
+      .pipe(
+        finalize(() => {
+          this.todasListas();
+        })
+      );
+  }
+
+  public atualizar(compra: Compra): Observable<unknown> {
+    return this.dbService.update<Compra>('compra', compra)
+      .pipe(
+        finalize(() => {
+          this.todasListas();
+        })
+      );
+  }
+
+  public buscarPorId(id: number): Observable<Compra> {
+    return this.dbService.getByID<Compra>('compra', id);
+  }
 }

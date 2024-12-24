@@ -1,26 +1,30 @@
-import {DatePipe, JsonPipe, NgClass} from '@angular/common';
+import {DatePipe, NgClass} from '@angular/common';
 import {Component, inject} from '@angular/core';
-import {toSignal} from '@angular/core/rxjs-interop';
+import {Router, RouterLink} from '@angular/router';
 import {Button} from 'primeng/button';
+import {Card} from 'primeng/card';
 import {DataView} from 'primeng/dataview';
 import {CompraService} from '../../service/compra.service';
 
 @Component({
   selector: 'app-lista-compra',
   imports: [
-    JsonPipe,
     Button,
     DataView,
     NgClass,
-    DatePipe
+    DatePipe,
+    Card,
+    RouterLink
   ],
   templateUrl: './lista-compra.component.html',
   styleUrl: './lista-compra.component.scss'
 })
 export default class ListaCompraComponent {
+  private readonly router = inject(Router);
   private readonly compraService = inject(CompraService);
   public compras$ = this.compraService.todasListas();
 
-  add(): void {
+  add(id: number): void {
+   void this.router.navigate(['compras/form/editar/', id,]);
   }
 }
