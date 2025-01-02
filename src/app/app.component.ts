@@ -2,14 +2,12 @@ import {Component, inject} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import Aura from '@primeng/themes/aura';
 import {PrimeNG} from 'primeng/config';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
-  providers: [TranslateService]
 })
 export class AppComponent {
   title = 'listaCompras';

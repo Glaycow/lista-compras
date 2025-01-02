@@ -1,1 +1,57 @@
-<p>lista-itens works!</p>
+<p-card>
+  <p-data-view #dv [value]="itens$()">
+    <ng-template #header>
+      <div class="flex flex-row justify-between items-center">
+        <h1>Item</h1>
+        <p-button
+          icon="pi pi-plus"
+          [rounded]="true"
+          severity="success"
+          routerLink="../form/novo"
+        />
+      </div>
+    </ng-template>
+    <ng-template #list let-compras>
+      <div class="grid grid-cols-12 gap-4 grid-nogutter">
+        @for (compra of compras; track compra.id; let first = $first) {
+          <div class="col-span-12">
+            <div class="flex p-4 gap-4" [ngClass]="{ 'border-t border-surface-200 dark:border-surface-700': !first }">
+              <div class="flex flex-col justify-around">
+                <p> {{compra.nome}}</p>
+                <p>  {{compra.data | date : 'dd/MM/YYYY'}} </p>
+              </div>
+              <div class="flex-1 justify-items-end">
+                <div class="flex flex-col gap-4">
+                  <p-button
+                    icon="pi pi-list-check"
+                    [rounded]="true"
+                    severity="info"
+                    [routerLink]="['/itens/compra/' + compra.id + '/lista']"
+                  />
+                  <p-button
+                    icon="pi pi-pencil"
+                    [rounded]="true"
+                    severity="success"
+                    (onClick)="editar(compra.id)"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    severity="danger"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="5">
+          <p class="pt-10">Sem itens na compra.</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-data-view>
+</p-card>
