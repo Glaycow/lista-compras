@@ -16,13 +16,12 @@ export const dbConfig: DBConfig = {
       store: 'itens-compra',
       storeConfig: {keyPath: 'id', autoIncrement: true},
       storeSchema: [
+        {name: 'idCompra', keypath: 'idCompra', options: {unique: false}},
         {name: 'nome', keypath: 'nome', options: {unique: false}},
-        {name: 'data', keypath: 'data', options: {unique: false}},
-        {name: 'quantidade', keypath: 'quantidade', options: {unique: false}},
-        {name: 'valor', keypath: 'valor', options: {unique: false}},
         {name: 'marca', keypath: 'marca', options: {unique: false}},
+        {name: 'valor', keypath: 'valor', options: {unique: false}},
+        {name: 'quantidade', keypath: 'quantidade', options: {unique: false}},
         {name: 'pego', keypath: 'pego', options: {unique: false}},
-        {name: 'compraId', keypath: 'compraId', options: {unique: false}},
       ]
     }
   ]

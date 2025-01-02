@@ -1,1 +1,69 @@
-<p>form-itens works!</p>
+<p-card>
+  <form [formGroup]="formulario">
+    <div class="flex flex-col gap-8">
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="nome"
+          formControlName="nome"
+          autocomplete="off"
+          class="w-full"
+        />
+        <label for="nome">Nome</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="marca"
+          formControlName="marca"
+          autocomplete="off"
+          class="w-full"
+        />
+        <label for="marca">Marca</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="valor"
+          formControlName="valor"
+          autocomplete="off"
+          class="w-full"
+        />
+        <label for="valor">Valor R$</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="quantidade"
+          formControlName="quantidade"
+          autocomplete="off"
+          class="w-full"
+        />
+        <label for="quantidade">Quantidade</label>
+      </p-floatlabel>
+
+
+      <div class="flex flex-row gap-8 justify-center">
+        <p-button
+          label="Salvar"
+          [raised]="true"
+          severity="success"
+          (onClick)="salvar()"
+          [disabled]="!formulario.valid"
+        />
+        <p-button
+          label="voltar"
+          [raised]="true"
+          severity="secondary"
+          routerLink="/.."
+        />
+      </div>
+    </div>
+  </form>
+
+  <pre>{{formulario.errors | json}}</pre>
+  <pre>{{formulario.getRawValue() | json}}</pre>
+</p-card>
