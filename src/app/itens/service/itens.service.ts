@@ -1,15 +1,26 @@
-import {inject, Injectable, signal, WritableSignal} from '@angular/core';
+import {inject, Injectable, Signal, signal, WritableSignal} from '@angular/core';
 import {NgxIndexedDBService} from 'ngx-indexed-db';
-import {Observable} from 'rxjs';
+import {map, Observable} from 'rxjs';
 import {Itens} from '../model/itens';
 
 @Injectable({providedIn: 'root'})
 export class ItensService {
   private readonly dbService = inject(NgxIndexedDBService);
-  private readonly listaItens = signal<Itens[]>([])
+  private readonly listaItens = signal<Itens[]>([]);
 
-  public todosItens(idLista: number): Observable<Itens[]> {
-    return this.dbService.getAllByIndex<Itens>('itens-compra', 'idCompra', IDBKeyRange.only(idLista));
+  public listaItens$ = this.listaItens.asReadonly();
+
+  public todosItens(idLista: number): Signal<Itens[]> {
+    this.dbService.getAllByIndex<Itens>('itens-compra', 'idCompra', IDBKeyRange.only(idLista))
+      .pipe(
+        map((itens) => itens.toSorted((a: Itens, b: Itens) => Number(a.pego) - Number(b.pego)))
+      ).subscribe({
+      next: (itens) => {
+        this.listaItens.set(itens);
+      }
+    });
+
+    return this.listaItens.asReadonly();
   }
 
   public buscarPorId(id: number): Observable<Itens> {
@@ -26,5 +37,10 @@ export class ItensService {
 
   public atualizar(itens: Itens): Observable<Itens> {
    return  this.dbService.update<Itens>('itens-compra', itens);
+  }
+
+  public atualizarPego(item: Itens): Observable<Itens> {
+    item.pego = !item.pego;
+    return this.dbService.update<Itens>('itens-compra', item);
   }
 }
