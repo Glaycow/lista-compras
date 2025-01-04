@@ -1,4 +1,4 @@
-import {inject, Injectable, Signal, signal, WritableSignal} from '@angular/core';
+import {inject, Injectable, Signal, signal} from '@angular/core';
 import {NgxIndexedDBService} from 'ngx-indexed-db';
 import {map, Observable} from 'rxjs';
 import {Itens} from '../model/itens';

@@ -1,15 +1,15 @@
-import {JsonPipe, Location} from '@angular/common';
+import {Location} from '@angular/common';
 import {Component, inject} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Router, RouterLink} from '@angular/router';
+import {RouterLink} from '@angular/router';
 import {derivedAsync} from 'ngxtension/derived-async';
-import {derivedFrom} from 'ngxtension/derived-from';
 import {injectParams} from 'ngxtension/inject-params';
 import {Button} from 'primeng/button';
 import {Card} from 'primeng/card';
 import {FloatLabel} from 'primeng/floatlabel';
+import {InputNumber} from 'primeng/inputnumber';
 import {InputText} from 'primeng/inputtext';
-import {switchMap, tap} from 'rxjs';
+import {tap} from 'rxjs';
 import {Itens} from '../../model/itens';
 import {ItensService} from '../../service/itens.service';
 
@@ -22,7 +22,7 @@ import {ItensService} from '../../service/itens.service';
     InputText,
     ReactiveFormsModule,
     RouterLink,
-    JsonPipe
+    InputNumber
   ],
   templateUrl: './form-itens.component.html',
   styleUrl: './form-itens.component.scss'
@@ -37,7 +37,7 @@ export default class FormItensComponent {
     nome: this.formBuilder.control<string>('', [Validators.required]),
     marca: this.formBuilder.control<string | null>(null, []),
     valor: this.formBuilder.control<number | null>(null, [Validators.required]),
-    quantidade: this.formBuilder.control<number | null>(null, [Validators.required]),
+    quantidade: this.formBuilder.control<number>(0, [Validators.required, Validators.min(1)]),
     pego: this.formBuilder.control<boolean>(false, [])
   });
   protected compraId = injectParams('id');
@@ -64,16 +64,20 @@ export default class FormItensComponent {
     if(this.tipoForm() === 1) {
       this.itemService.atualizar(item).subscribe({
         next: () => {
-          this.location.back();
+          this.voltar();
         }
       });
     } else {
       delete item.id;
       this.itemService.adicionar(item).subscribe({
         next: () => {
-          this.location.back();
+          this.voltar();
         }
       });
     }
+  }
+
+  public voltar(): void {
+    this.location.back();
   }
 }

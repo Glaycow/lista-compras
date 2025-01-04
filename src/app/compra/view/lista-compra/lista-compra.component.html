@@ -38,6 +38,7 @@
                     icon="pi pi-trash"
                     [rounded]="true"
                     severity="danger"
+                    (onClick)="apagar(compra.id!, $event)"
                   />
                 </div>
               </div>
@@ -55,3 +56,4 @@
     </ng-template>
   </p-data-view>
 </p-card>
+<p-confirmdialog />

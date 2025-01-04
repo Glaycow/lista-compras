@@ -1,12 +1,14 @@
 import {inject, Injectable, signal, WritableSignal} from '@angular/core';
 import {NgxIndexedDBService} from 'ngx-indexed-db';
-import {finalize, Observable} from 'rxjs';
+import {combineLatest, finalize, forkJoin, map, Observable, of} from 'rxjs';
+import {ItensService} from '../../itens/service/itens.service';
 import {Compra} from '../model/compra';
 
 @Injectable({providedIn: 'root'})
 export class CompraService {
   private readonly dbService = inject(NgxIndexedDBService);
-  private readonly listaCompras = signal<Compra[]>([])
+  private readonly listaCompras = signal<Compra[]>([]);
+  private readonly itensService = inject(ItensService);
 
   public todasListas(): WritableSignal<Compra[]> {
     this.dbService.getAll<Compra>('compra').subscribe({
@@ -27,12 +29,18 @@ export class CompraService {
   }
 
   public remover(id: number): Observable<unknown> {
-    return this.dbService.delete('compra', id)
-      .pipe(
-        finalize(() => {
-          this.todasListas();
-        })
-      );
+    const itens = this.itensService.todosItens(id);
+    let ids: number[] = [];
+    if (itens().length > 0) {
+      ids = itens().map(item => item.id!);
+
+      return forkJoin({
+        compra: this.dbService.delete('compra', id).pipe(finalize(() => this.todasListas())),
+        itens: this.dbService.bulkDelete('itens-compra', ids)
+      });
+    }
+
+    return this.dbService.delete('compra', id).pipe(finalize(() => this.todasListas()));
   }
 
   public atualizar(compra: Compra): Observable<unknown> {
