@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import FormCompraComponent from './form-compra.component';
 
-import { FormCompraComponent } from './form-compra.component';
+
 
 describe('FormCompraComponent', () => {
   let component: FormCompraComponent;
