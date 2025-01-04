@@ -31,14 +31,14 @@
     <div class="pb-4">
       <p-card>
         <div class="col-span-12">
-          <div class="flex">
+          <div class="grid grid-cols-2">
             <div class="flex flex-col justify-around">
               <p> {{ compra.nome }}</p>
               <p>Qtd: <b>{{compra.quantidade}}</b></p>
               <p>Valor Uni.: <b>{{(compra.valor) | currency: 'BRL'}}</b></p>
               <p>Total: <b>{{(compra.quantidade * compra.valor) | currency: 'BRL'}}</b></p>
             </div>
-            <div class="flex-1 justify-items-end">
+            <div class="grid justify-items-end">
              <div class="flex flex-col gap-4">
                <p-button
                  [icon]="compra.pego ? 'pi pi-check-square' : 'pi pi-stop'"
