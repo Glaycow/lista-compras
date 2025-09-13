@@ -1,0 +1,20 @@
+.container {
+  overflow: scroll;
+  overscroll-behavior: none;
+}
+
+tui-app-bar {
+  position: sticky;
+  top: -1px;
+  z-index: 1;
+  background: var(--tui-background-base);
+}
+
+tui-segmented {
+  inline-size: 6rem;
+  margin-block-end: 1rem;
+}
+
+.content > [tuiHeader] {
+  padding: 0 1rem;
+}

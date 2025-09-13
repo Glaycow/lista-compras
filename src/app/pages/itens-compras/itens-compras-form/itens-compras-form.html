@@ -1,0 +1,99 @@
+<div class="container">
+  <div tuiAppearance="floating"
+       tuiCardLarge
+       class="container">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-content">
+      <div class="form-field">
+        <tui-textfield>
+          <label tuiLabel> Nome do item</label>
+          <input
+            formControlName="nome"
+            placeholder="Nome do item"
+            tuiTextfield
+          />
+        </tui-textfield>
+        <tui-error
+          formControlName="nome"
+          [error]="[] | tuiFieldError | async"
+        ></tui-error>
+      </div>
+
+      <div class="form-field">
+        <tui-textfield>
+          <label tuiLabel>Marca</label>
+          <input
+            formControlName="marca"
+            placeholder="Marca (opcional)"
+            tuiTextfield
+          />
+        </tui-textfield>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <tui-textfield>
+            <label tuiLabel>Quantidade</label>
+            <input
+              tuiInputNumber
+              formControlName="quantidade"
+              [min]="1"
+              [max]="9999"
+              placeholder="Quantidade"
+              [step]="1"
+            />
+          </tui-textfield>
+          <tui-error
+            formControlName="quantidade"
+            [error]="[] | tuiFieldError | async"
+          ></tui-error>
+        </div>
+
+        <div class="form-field">
+          <tui-textfield>
+            <label tuiLabel>Valor (R$)</label>
+            <input
+              tuiInputNumber
+              [min]="0"
+              formControlName="valor"
+              [tuiNumberFormat]="{precision: 2, decimalSeparator: ',', thousandSeparator: '.' }"
+            />
+          </tui-textfield>
+          <tui-error
+            formControlName="valor"
+            [error]="[] | tuiFieldError | async"
+          ></tui-error>
+        </div>
+      </div>
+
+      <div class="total-display">
+        <span class="total-label">Total do item:</span>
+        <span class="total-value">
+              {{ getTotalValue() | currency:'BRL':'symbol':'1.2-2' }}
+            </span>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          tuiButton
+          appearance="flat"
+          size="m"
+          (click)="goBack()"
+          class="cancel-button"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          tuiButton
+          appearance="primary"
+          size="m"
+          [disabled]="form.invalid || isSubmitting()"
+          class="submit-button"
+        >
+          {{ isSubmitting() ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

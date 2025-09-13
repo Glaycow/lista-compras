@@ -1,0 +1,28 @@
+<tui-app-bar class="black">
+  @if(urlBack()) {
+    <a
+      tuiSlot="left"
+      style="padding-left: 10px"
+      [routerLink]="this.urlBack()"
+    >
+      <tui-icon
+        icon="@tui.arrow-left-to-line"
+        [style.color]="'var(--tui-text-primary-on-accent-1)'"
+      />
+    </a>
+  }
+  {{title()}}
+
+  @for (button of buttons(); track button.id) {
+    <a
+      tuiSlot="right"
+      (click)="onButtonClick(button)"
+      style="padding-right: 10px"
+    >
+      <tui-icon
+        [icon]="button.icon"
+        [style.color]="'var(--tui-text-positive-hover)'"
+      />
+    </a>
+  }
+</tui-app-bar>

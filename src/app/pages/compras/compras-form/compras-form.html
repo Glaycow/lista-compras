@@ -1,0 +1,61 @@
+<div class="container">
+
+  <div
+    tuiAppearance="floating"
+    tuiCardLarge
+  >
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-content">
+      <div class="form-field">
+        <tui-textfield>
+          <label tuiLabel>Nome</label>
+         <input
+            formControlName="nome"
+            tuiTextfield
+         />
+        </tui-textfield>
+        <tui-error
+          formControlName="nome"
+          [error]="[] | tuiFieldError | async"
+        ></tui-error>
+      </div>
+
+      <div class="form-field">
+        <tui-textfield>
+          <label tuiLabel>Data</label>
+          <input
+            tuiInputDate
+            formControlName="data"
+          />
+          <tui-calendar *tuiTextfieldDropdown />
+        </tui-textfield>
+        <tui-error
+          formControlName="data"
+          [error]="[] | tuiFieldError | async"
+        ></tui-error>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          tuiButton
+          appearance="flat"
+          size="m"
+          (click)="goBack()"
+          class="cancel-button"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          tuiButton
+          appearance="primary"
+          size="m"
+          [disabled]="form.invalid || isSubmitting()"
+          class="submit-button"
+        >
+          {{ isSubmitting() ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

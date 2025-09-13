@@ -1,0 +1,78 @@
+<div class="container">
+  <div class="shopping-list">
+    @if (existeShopping()) {
+      <div tuiSurface class="empty-state">
+        <div class="empty-content">
+          <tui-icon icon="@tui.shopping-cart" [style.font-size.rem]="3"></tui-icon>
+          <p>Nenhuma compra encontrada</p>
+          <button
+            tuiButton
+            appearance="primary"
+            size="m"
+            routerLink="/shopping/new"
+          >
+            Criar primeira compra
+          </button>
+        </div>
+      </div>
+    } @else {
+      @for (shopping of shoppings(); track shopping.id) {
+        <div
+          tuiAppearance="floating"
+          tuiCardLarge
+          class="shopping-card"
+          [routerLink]="['/shopping', shopping.id, 'items']"
+        >
+          <div class="card-content">
+            <div>
+              <div class="card-header">
+                <h3>{{ shopping.nome }}</h3>
+              </div>
+              <div class="card-info">
+                <p class="date">{{ shopping.data | date : 'dd/MM/yyyy' }}</p>
+                <p class="items-count">
+                  {{ shopping.id! | totalItensShopping | async }} itens
+                </p>
+              </div>
+              <div class="card-footer">
+                  <span class="total">
+                    Total: {{ shopping.id! | totalItensMarcados | async | currency:'BRL':'symbol':'1.2-2' }}
+                  </span>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                [routerLink]="['/shopping', shopping.id, 'edit']"
+                (click)="$event.stopPropagation()"
+                [style.color]="'var(--tui-text-positive-hover)'"
+              >
+                <tui-icon icon="@tui.pencil"></tui-icon>
+              </button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                [routerLink]="['/shopping', shopping.id, 'items']"
+                (click)="$event.stopPropagation()"
+              >
+                <tui-icon icon="@tui.list"></tui-icon>
+              </button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                (click)="deleteShopping(shopping.id!, $event)"
+                [style.color]="'var(--tui-text-negative-hover)'"
+              >
+                <tui-icon icon="@tui.trash"></tui-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

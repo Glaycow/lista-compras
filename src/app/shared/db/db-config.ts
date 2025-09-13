@@ -1,28 +1,35 @@
-import {DBConfig} from 'ngx-indexed-db';
+import Dexie, {Table} from 'dexie';
+import {Shopping} from '../model/Shopping';
+import {ShoppingItem} from '../model/ShoppingItem';
 
-export const dbConfig: DBConfig = {
-  name: 'MyDb',
-  version: 1,
-  objectStoresMeta: [
-    {
-      store: 'compra',
-      storeConfig: {keyPath: 'id', autoIncrement: true},
-      storeSchema: [
-        {name: 'nome', keypath: 'nome', options: {unique: false}},
-        {name: 'data', keypath: 'data', options: {unique: false}},
-      ]
-    },
-    {
-      store: 'itens-compra',
-      storeConfig: {keyPath: 'id', autoIncrement: true},
-      storeSchema: [
-        {name: 'idCompra', keypath: 'idCompra', options: {unique: false}},
-        {name: 'nome', keypath: 'nome', options: {unique: false}},
-        {name: 'marca', keypath: 'marca', options: {unique: false}},
-        {name: 'valor', keypath: 'valor', options: {unique: false}},
-        {name: 'quantidade', keypath: 'quantidade', options: {unique: false}},
-        {name: 'pego', keypath: 'pego', options: {unique: false}},
-      ]
-    }
-  ]
-};
+export class DbConfig extends Dexie {
+  shopping!: Table<Shopping, number>;
+  shoppingItem!: Table<ShoppingItem, number>;
+
+  constructor() {
+    super('shopping');
+    this.version(1).stores({
+      shopping: '++id, nome, data',
+      shoppingItem: '++id,shoppingId, nome, marcar, quantidade, valor, itemMarcado',
+    });
+    //this.on('populate', () => this.populationsShopping())
+  }
+
+  private async populationsShopping(): Promise<void> {
+    const listaInicio = await DbShoppingApp.shopping.add({
+      nome: 'Teste',
+      data: new Date()
+    });
+
+    await DbShoppingApp.shoppingItem.add({
+      nome: 'teste item',
+      shoppingId: listaInicio,
+      valor: 10,
+      itemMarcado: false,
+      quantidade: 5,
+      marca: ''
+    })
+  }
+}
+export const DbShoppingApp = new DbConfig();
+

@@ -1,0 +1,86 @@
+<div class="container">
+  <div class="items-summary">
+    <div class="summary-card">
+      <div class="summary-item">
+        <span class="label">Total de itens:</span>
+        <span class="value">{{ items().length }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">total marcado / total</span>
+        <span class="value">{{ valorPego().toFixed(2) | currency: 'BRL' }} de {{ valorTotal().toFixed(2) | currency: 'BRL' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="items-list">
+    @if (items().length === 0) {
+      <div tuiSurface class="empty-state">
+        <div class="empty-content">
+          <tui-icon icon="@tui.list" [style.font-size.rem]="2"></tui-icon>
+          <p>Nenhum item adicionado</p>
+          <button
+            tuiButton
+            appearance="primary"
+            size="m"
+            [routerLink]="['/shopping', shoppingId(), 'items', 'new']"
+          >
+            Adicionar primeiro item
+          </button>
+        </div>
+      </div>
+    } @else {
+      @for (item of items(); track item.id) {
+        <div
+          class="item-card"
+          [class.marked]="item.itemMarcado"
+          tuiAppearance="floating"
+          tuiCardLarge
+        >
+          <div class="item-content">
+            <div class="item-info">
+              <h3 class="item-name">{{ item.nome }}</h3>
+              @if (item.marca) {
+                <p class="item-brand">{{ item.marca }}</p>
+              }
+              <div class="item-details">
+                <span class="quantity">Qtd: {{ item.quantidade }}</span>
+                <span class="price">Preço unitário: {{ item.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="total">
+                      Total: {{ (item.valor * item.quantidade) | currency:'BRL':'symbol':'1.2-2' }}
+                    </span>
+              </div>
+            </div>
+
+            <div class="item-actions">
+
+              <input
+                checked
+                tuiCheckbox
+                type="checkbox"
+                [ngModel]="item.itemMarcado"
+                (ngModelChange)="toggleItemMarcado(item)"
+              />
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                [routerLink]="['/shopping', shoppingId(), 'items', item.id, 'edit']"
+              >
+                <tui-icon icon="@tui.pencil" [style.color]="'var(--tui-text-positive-hover)'"></tui-icon>
+              </button>
+              <button
+                tuiButton
+                appearance="flat"
+                size="s"
+                (click)="deleteItem(item.id!, $event)"
+              >
+                <tui-icon icon="@tui.trash" [style.color]="'var(--tui-text-negative-hover)'"></tui-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+</div>

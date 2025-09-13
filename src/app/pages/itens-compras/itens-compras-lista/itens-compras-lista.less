@@ -1,0 +1,180 @@
+.container {
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+}
+
+.shopping-info h1 {
+  margin: 0;
+}
+
+.shopping-date {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tui-text-secondary);
+}
+
+.add-item-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.items-summary {
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--tui-surface-elevated);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--tui-text-secondary);
+}
+
+.value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.total-value {
+  color: var(--tui-status-success);
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.item-card {
+  transition: all 0.2s ease;
+}
+
+.item-card.marked {
+  opacity: 0.7;
+  background: var(--tui-surface-neutral);
+}
+
+.item-content {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  padding: 16px;
+  gap: 16px;
+}
+
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.item-brand {
+  margin: 0;
+  font-size: 14px;
+  color: var(--tui-text-secondary);
+}
+
+.item-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.quantity {
+  color: var(--tui-text-secondary);
+}
+
+.price {
+  color: var(--tui-text-primary);
+}
+
+.total {
+  font-weight: 600;
+  color: var(--tui-status-success);
+}
+
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  justify-content: space-around;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-item-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .item-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

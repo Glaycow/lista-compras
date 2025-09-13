@@ -1,28 +1,21 @@
-import {registerLocaleData} from '@angular/common';
-import ptBr from '@angular/common/locales/pt';
-import {ApplicationConfig, LOCALE_ID, provideZoneChangeDetection} from '@angular/core';
-import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
-import {provideRouter} from '@angular/router';
-import Aura from '@primeng/themes/material';
-import {provideIndexedDb} from 'ngx-indexed-db';
-import {providePrimeNG} from 'primeng/config';
-
-import {routes} from './app.routes';
-import {dbConfig} from './shared/db/db-config';
-
-registerLocaleData(ptBr);
+import { provideEventPlugins } from "@taiga-ui/event-plugins";
+import { provideAnimations } from "@angular/platform-browser/animations";
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { TUI_LANGUAGE, TUI_PORTUGUESE_LANGUAGE } from '@taiga-ui/i18n';
+import { routes } from './app.routes';
+import { of } from "rxjs";
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({eventCoalescing: true}),
+    provideAnimations(),
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideAnimationsAsync(),
-    providePrimeNG({
-      theme: {
-        preset: Aura
-      }
-    }),
-    provideIndexedDb(dbConfig),
-    { provide: LOCALE_ID, useValue: 'pt-BR' }
+    provideEventPlugins(),
+    {
+      provide: TUI_LANGUAGE,
+      useValue: of(TUI_PORTUGUESE_LANGUAGE),
+    },
   ]
 };
