@@ -16,7 +16,7 @@ export class ShoppingItensService {
   public async getShoppingItensByShoppingId(shoppingId: number): Promise<void> {
     await this.db.shoppingItem.filter((shoppingItem => shoppingItem.shoppingId == shoppingId)).toArray().then(
       (shoppingItems) => {
-        this.listaItens.set(shoppingItems);
+        this.listaItens.set(this.ordenarPorMarcado(shoppingItems));
       }
     );
   }
@@ -40,5 +40,21 @@ export class ShoppingItensService {
 
   public async updateItemMarcado(item: ShoppingItem): Promise<number> {
     return this.db.shoppingItem.filter((shoppingItem) => shoppingItem.id == item.id!).modify({ itemMarcado: !item.itemMarcado});
+  }
+
+  private ordenarPorMarcado(itens: ShoppingItem[]): ShoppingItem[] {
+    return [...itens].sort((a, b) => {
+      // 1º critério: itemMarcado (marcados primeiro)
+      if (a.itemMarcado !== b.itemMarcado) {
+        return a.itemMarcado ? 1 : -1;
+      }
+
+      // 2º critério: nome (ordem alfabética)
+      const nomeCompare = a.nome.localeCompare(b.nome);
+      if (nomeCompare !== 0) return nomeCompare;
+
+      // 3º critério: marca (ordem alfabética)
+      return (a.marca || '').localeCompare(b.marca || '');
+    });
   }
 }

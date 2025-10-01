@@ -39,7 +39,8 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
     nome: this.fb.control('', [Validators.required, Validators.minLength(2)]),
     marca: this.fb.control(''),
     quantidade: this.fb.control(1, [Validators.required, Validators.min(1)]),
-    valor: this.fb.control(0.0, [Validators.required, Validators.min(0.01)])
+    valor: this.fb.control(0.0, [Validators.required, Validators.min(0.01)]),
+    itemMarcado: this.fb.control<boolean>(false)
   });
   isEditMode = signal(false);
   isSubmitting = signal(false);
@@ -73,7 +74,7 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
     return quantidade * valor;
   }
 
-  onSubmit(): void {
+   async onSubmit(): Promise<void> {
     if (this.form.invalid) return;
 
     this.isSubmitting.set(true);
@@ -85,14 +86,14 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
       marca: formValue.marca || undefined,
       quantidade: formValue.quantidade!,
       valor: formValue.valor!,
-      itemMarcado: false
+      itemMarcado: formValue.itemMarcado!
     };
 
     if (!this.isEditMode()) {
-      this.create(item);
+      await this.create(item);
     } else {
       item.id = this.currentItemId()!;
-     this.update(item);
+     await this.update(item);
     }
   }
 
@@ -109,7 +110,8 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
             nome: item.nome,
             marca: item.marca || '',
             quantidade: item.quantidade,
-            valor: item.valor
+            valor: item.valor,
+            itemMarcado: item.itemMarcado,
           });
         }
       })
@@ -118,11 +120,10 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
 
   private async update(formData: ShoppingItem): Promise<void> {
     this.shoppingItensService.update(formData)
-      .then((update) => {
-        console.log(update);
+      .then(() => {
         this.goBack();
       })
-    .catch((error: Error) => { console.error(error) })
+    .catch((error: Error) => {  })
     .finally(() => this.isLoading.set(false));
   }
 
@@ -131,7 +132,7 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
       .then(() => {
         this.goBack();
       })
-      .catch(error => console.log(error))
+      .catch(error => {})
       .finally(() => this.isSubmitting.set(false));
   }
 

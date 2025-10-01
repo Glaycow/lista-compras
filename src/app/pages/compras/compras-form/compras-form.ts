@@ -99,10 +99,9 @@ export default class ComprasForm implements OnInit {
   private async update(formData: Shopping): Promise<void> {
     await this.databaseService.update(formData)
       .then((teste) => {
-        console.log(teste)
         this.goBack();
       })
-      .catch((error: Error) => { console.error(error) })
+      .catch((error: Error) => {  })
       .finally(() => this.isLoading.set(false));
   }
 
@@ -111,7 +110,7 @@ export default class ComprasForm implements OnInit {
       then(() => {
         this.goBack();
       })
-      .catch(error => console.log(error))
+      .catch(error => {})
       .finally(() => this.isSubmitting.set(false));
   }
 }
