@@ -1,10 +1,10 @@
-import {AsyncPipe} from '@angular/common';
+
 import {Component, DestroyRef, inject, OnInit, signal} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TuiDay} from '@taiga-ui/cdk';
 import {TuiAppearance, TuiButton, tuiDateFormatProvider, TuiError, TuiTextfield} from '@taiga-ui/core';
-import {TuiFieldErrorPipe, TuiInputDate, tuiInputDateOptionsProviderNew} from '@taiga-ui/kit';
+import {TuiInputDate, tuiInputDateOptionsProvider} from '@taiga-ui/kit';
 import {TuiCard} from '@taiga-ui/layout';
 import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingService} from '../../../shared/service/shopping-service';
@@ -15,8 +15,6 @@ import {ShoppingService} from '../../../shared/service/shopping-service';
     TuiAppearance,
     TuiCard,
     ReactiveFormsModule,
-    TuiFieldErrorPipe,
-    AsyncPipe,
     TuiTextfield,
     TuiError,
     TuiInputDate,
@@ -25,8 +23,8 @@ import {ShoppingService} from '../../../shared/service/shopping-service';
   templateUrl: './compras-form.html',
   styleUrl: './compras-form.less',
   providers: [
-    tuiDateFormatProvider({mode: 'MDY', separator: '/'}),
-    tuiInputDateOptionsProviderNew({
+    tuiDateFormatProvider({mode: 'dd/mm/yyyy', separator: '/'}),
+    tuiInputDateOptionsProvider({
       valueTransformer: {
         fromControlValue: (value: Date | null): TuiDay | null =>
           value && TuiDay.fromUtcNativeDate(value),

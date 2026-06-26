@@ -1,6 +1,9 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { TuiAlertService } from '@taiga-ui/core';
 
-import { ComprasLista } from './compras-lista';
+import ComprasLista from './compras-lista';
 
 describe('ComprasLista', () => {
   let component: ComprasLista;
@@ -8,7 +11,15 @@ describe('ComprasLista', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ComprasLista]
+      imports: [ComprasLista],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: TuiAlertService,
+          useValue: { open: () => ({ subscribe: () => {} }) },
+        },
+      ],
     })
     .compileComponents();
 

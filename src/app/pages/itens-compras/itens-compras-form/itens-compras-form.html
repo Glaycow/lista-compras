@@ -12,10 +12,7 @@
             tuiTextfield
           />
         </tui-textfield>
-        <tui-error
-          formControlName="nome"
-          [error]="[] | tuiFieldError | async"
-        ></tui-error>
+        <tui-error formControlName="nome"></tui-error>
       </div>
 
       <div class="form-field">
@@ -42,10 +39,7 @@
               [step]="1"
             />
           </tui-textfield>
-          <tui-error
-            formControlName="quantidade"
-            [error]="[] | tuiFieldError | async"
-          ></tui-error>
+          <tui-error formControlName="quantidade"></tui-error>
         </div>
 
         <div class="form-field">
@@ -58,10 +52,7 @@
               [tuiNumberFormat]="{precision: 2, decimalSeparator: ',', thousandSeparator: '.' }"
             />
           </tui-textfield>
-          <tui-error
-            formControlName="valor"
-            [error]="[] | tuiFieldError | async"
-          ></tui-error>
+          <tui-error formControlName="valor"></tui-error>
         </div>
       </div>
 

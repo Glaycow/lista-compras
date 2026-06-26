@@ -13,10 +13,7 @@
             tuiTextfield
          />
         </tui-textfield>
-        <tui-error
-          formControlName="nome"
-          [error]="[] | tuiFieldError | async"
-        ></tui-error>
+        <tui-error formControlName="nome"></tui-error>
       </div>
 
       <div class="form-field">
@@ -26,12 +23,9 @@
             tuiInputDate
             formControlName="data"
           />
-          <tui-calendar *tuiTextfieldDropdown />
+          <tui-calendar />
         </tui-textfield>
-        <tui-error
-          formControlName="data"
-          [error]="[] | tuiFieldError | async"
-        ></tui-error>
+        <tui-error formControlName="data"></tui-error>
       </div>
 
       <div class="form-actions">

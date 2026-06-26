@@ -1,4 +1,7 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { TUI_OPTIONS } from '@taiga-ui/core';
 
 import { AppBarComponent } from './app-bar-component';
 
@@ -8,7 +11,15 @@ describe('AppBarComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppBarComponent]
+      imports: [AppBarComponent],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: TUI_OPTIONS,
+          useValue: { apis: 'stable', fontScaling: true, scrollbars: 'native' },
+        },
+      ],
     })
     .compileComponents();
 

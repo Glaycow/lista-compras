@@ -1,9 +1,9 @@
-import {AsyncPipe, CurrencyPipe} from '@angular/common';
+import {CurrencyPipe} from '@angular/common';
 import {Component, DestroyRef, inject, OnDestroy, OnInit, signal} from '@angular/core';
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TuiAppearance, TuiButton, TuiError, TuiNumberFormat, TuiTextfield} from '@taiga-ui/core';
-import {TuiFieldErrorPipe, TuiInputNumber} from '@taiga-ui/kit';
+import {TuiInputNumber} from '@taiga-ui/kit';
 import {TuiCard} from '@taiga-ui/layout';
 import {NavBarButtonService} from '../../../core/service/nav-bar-button-service';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
@@ -17,8 +17,6 @@ import {ShoppingItensService} from '../../../shared/service/shopping-itens-servi
     ReactiveFormsModule,
     CurrencyPipe,
     TuiButton,
-    TuiFieldErrorPipe,
-    AsyncPipe,
     TuiError,
     TuiTextfield,
     TuiInputNumber,
