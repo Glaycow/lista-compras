@@ -1,88 +1,82 @@
 <div class="container">
-  <div tuiAppearance="floating"
-       tuiCardLarge
-       class="container">
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-content">
+  <div class="form-card" [class.submitting]="form().submitting()">
+    @if (form().submitting() || isExiting()) {
+      <div class="submit-overlay" [class.exiting]="isExiting()">
+        <div class="spinner"></div>
+        <span class="loading-text">Salvando...</span>
+      </div>
+    }
+    <form [formRoot]="form" class="form-content">
       <div class="form-field">
-        <tui-textfield>
-          <label tuiLabel> Nome do item</label>
-          <input
-            formControlName="nome"
-            placeholder="Nome do item"
-            tuiTextfield
-          />
-        </tui-textfield>
-        <tui-error formControlName="nome"></tui-error>
+        <label class="label" for="nome">Nome do item</label>
+        <input
+          id="nome"
+          class="input"
+          [formField]="form.nome"
+          placeholder="Nome do item"
+        />
+        @if (form.nome().invalid() && form.nome().touched()) {
+          <p class="error">{{ form.nome().getError('required')?.message || form.nome().getError('minLength')?.message }}</p>
+        }
       </div>
 
       <div class="form-field">
-        <tui-textfield>
-          <label tuiLabel>Marca</label>
-          <input
-            formControlName="marca"
-            placeholder="Marca (opcional)"
-            tuiTextfield
-          />
-        </tui-textfield>
+        <label class="label" for="marca">Marca</label>
+        <input
+          id="marca"
+          class="input"
+          [formField]="form.marca"
+          placeholder="Marca (opcional)"
+        />
       </div>
 
       <div class="form-row">
         <div class="form-field">
-          <tui-textfield>
-            <label tuiLabel>Quantidade</label>
-            <input
-              tuiInputNumber
-              formControlName="quantidade"
-              [min]="1"
-              [max]="9999"
-              placeholder="Quantidade"
-              [step]="1"
-            />
-          </tui-textfield>
-          <tui-error formControlName="quantidade"></tui-error>
+          <label class="label" for="quantidade">Quantidade</label>
+          <input
+            id="quantidade"
+            class="input"
+            type="number"
+            [formField]="form.quantidade"
+            step="1"
+            placeholder="Quantidade"
+          />
+          @if (form.quantidade().invalid() && form.quantidade().touched()) {
+            <p class="error">{{ form.quantidade().getError('min')?.message || form.quantidade().getError('required')?.message }}</p>z
+          }
         </div>
 
         <div class="form-field">
-          <tui-textfield>
-            <label tuiLabel>Valor (R$)</label>
-            <input
-              tuiInputNumber
-              [min]="0"
-              formControlName="valor"
-              [tuiNumberFormat]="{precision: 2, decimalSeparator: ',', thousandSeparator: '.' }"
-            />
-          </tui-textfield>
-          <tui-error formControlName="valor"></tui-error>
+          <label class="label" for="valor">Valor (R$)</label>
+          <app-br-currency-input
+            id="valor"
+            [formField]="form.valor"
+            placeholder="0,00"
+          />
+          @if (form.valor().invalid() && form.valor().touched()) {
+            <p class="error">{{ form.valor().getError('min')?.message || form.valor().getError('required')?.message }}</p>
+          }
         </div>
       </div>
 
       <div class="total-display">
         <span class="total-label">Total do item:</span>
-        <span class="total-value">
-              {{ getTotalValue() | currency:'BRL':'symbol':'1.2-2' }}
-            </span>
+        <span class="total-value">{{ totalValue() | currency:'BRL':'symbol':'1.2-2' }}</span>
       </div>
 
+      @if (submitError()) {
+        <div class="error-banner">
+          <span class="error-banner-icon">&#9888;</span>
+          <span>{{ submitError() }}</span>
+        </div>
+      }
+
       <div class="form-actions">
-        <button
-          type="button"
-          tuiButton
-          appearance="flat"
-          size="m"
-          (click)="goBack()"
-          class="cancel-button"
-        >
+        <button type="button" class="btn btn-secondary" (click)="goBack()">
           Cancelar
         </button>
-        <button
-          type="submit"
-          tuiButton
-          appearance="primary"
-          size="m"
-          [disabled]="form.invalid || isSubmitting()"
-          class="submit-button"
-        >
-          {{ isSubmitting() ? 'Salvando...' : 'Salvar' }}
+        <button type="submit" class="btn btn-primary" [disabled]="form().invalid() || form().submitting()">
+          {{ form().submitting() ? 'Salvando...' : 'Salvar' }}
         </button>
       </div>
     </form>

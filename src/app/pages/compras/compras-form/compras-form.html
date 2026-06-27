@@ -1,53 +1,51 @@
 <div class="container">
-
-  <div
-    tuiAppearance="floating"
-    tuiCardLarge
-  >
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-content">
+  <div class="form-card" [class.submitting]="form().submitting()">
+    @if (form().submitting() || isExiting()) {
+      <div class="submit-overlay" [class.exiting]="isExiting()">
+        <div class="spinner"></div>
+        <span class="loading-text">Salvando...</span>
+      </div>
+    }
+    <form [formRoot]="form" class="form-content">
       <div class="form-field">
-        <tui-textfield>
-          <label tuiLabel>Nome</label>
-         <input
-            formControlName="nome"
-            tuiTextfield
-         />
-        </tui-textfield>
-        <tui-error formControlName="nome"></tui-error>
+        <label class="label" for="nome">Nome</label>
+        <input
+          id="nome"
+          class="input"
+          [formField]="form.nome"
+          placeholder="Nome da lista"
+        />
+        @if (form.nome().invalid() && form.nome().touched()) {
+          <p class="error">{{ form.nome().getError('required')?.message || form.nome().getError('minLength')?.message }}</p>
+        }
       </div>
 
       <div class="form-field">
-        <tui-textfield>
-          <label tuiLabel>Data</label>
-          <input
-            tuiInputDate
-            formControlName="data"
-          />
-          <tui-calendar />
-        </tui-textfield>
-        <tui-error formControlName="data"></tui-error>
+        <label class="label" for="data">Data</label>
+        <input
+          id="data"
+          class="input"
+          type="date"
+          [formField]="form.data"
+        />
+        @if (form.data().invalid() && form.data().touched()) {
+          <p class="error">{{ form.data().getError('required')?.message }}</p>
+        }
       </div>
+
+      @if (submitError()) {
+        <div class="error-banner">
+          <span class="error-banner-icon">&#9888;</span>
+          <span>{{ submitError() }}</span>
+        </div>
+      }
 
       <div class="form-actions">
-        <button
-          type="button"
-          tuiButton
-          appearance="flat"
-          size="m"
-          (click)="goBack()"
-          class="cancel-button"
-        >
+        <button type="button" class="btn btn-secondary" (click)="goBack()">
           Cancelar
         </button>
-        <button
-          type="submit"
-          tuiButton
-          appearance="primary"
-          size="m"
-          [disabled]="form.invalid || isSubmitting()"
-          class="submit-button"
-        >
-          {{ isSubmitting() ? 'Salvando...' : 'Salvar' }}
+        <button type="submit" class="btn btn-primary" [disabled]="form().invalid() || form().submitting()">
+          {{ form().submitting() ? 'Salvando...' : 'Salvar' }}
         </button>
       </div>
     </form>
