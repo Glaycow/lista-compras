@@ -1,21 +1,30 @@
-import { provideEventPlugins } from "@taiga-ui/event-plugins";
-import { provideAnimations } from "@angular/platform-browser/animations";
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { TUI_LANGUAGE, TUI_PORTUGUESE_LANGUAGE } from '@taiga-ui/i18n';
-import { routes } from './app.routes';
-import { of } from "rxjs";
+import {ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection} from '@angular/core';
+import {provideRouter, withViewTransitions} from '@angular/router';
+import {provideSignalFormsConfig} from '@angular/forms/signals';
+import {routes} from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideAnimations(),
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideRouter(routes),
-    provideEventPlugins(),
-    {
-      provide: TUI_LANGUAGE,
-      useValue: of(TUI_PORTUGUESE_LANGUAGE),
-    },
-  ]
+    provideRouter(routes, withViewTransitions({
+      onViewTransitionCreated: ({transition}) => {
+        // Skip transition if user prefers reduced motion
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          transition.skipTransition();
+        }
+      },
+    })),
+    provideSignalFormsConfig({
+      classes: {
+        'ng-touched': (f) => f.state().touched(),
+        'ng-untouched': (f) => !f.state().touched(),
+        'ng-valid': (f) => f.state().valid(),
+        'ng-invalid': (f) => f.state().invalid(),
+        'ng-dirty': (f) => f.state().dirty(),
+        'ng-pristine': (f) => !f.state().dirty(),
+        'ng-pending': (f) => f.state().pending(),
+      },
+    }),
+  ],
 };

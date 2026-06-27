@@ -1,0 +1,90 @@
+.currency-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover:not(.disabled) {
+    border-color: #9ca3af;
+  }
+
+  &.focused {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  }
+
+  &.disabled {
+    background: #f9fafb;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.has-value:not(.focused) {
+    background: #fafbff;
+
+    .currency-input {
+      font-weight: 600;
+      color: #059669;
+    }
+  }
+
+  /* Validation states — via :host-context on the app-br-currency-input element */
+  :host-context(.ng-touched.ng-invalid) & {
+    border-color: #dc2626;
+  }
+
+  :host-context(.ng-dirty.ng-valid) & {
+    border-color: #059669;
+  }
+}
+
+.currency-prefix {
+  flex-shrink: 0;
+  padding: 10px 0 10px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  user-select: none;
+  letter-spacing: 0.5px;
+
+  .focused & {
+    color: #6366f1;
+  }
+
+  .has-value:not(.focused) & {
+    color: #059669;
+  }
+}
+
+.currency-input {
+  flex: 1;
+  display: block;
+  width: 100%;
+  padding: 10px 14px 10px 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-family: inherit;
+  color: #111827;
+  outline: none;
+  min-width: 0;
+
+  /* Remove spinner for number inputs */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  &[type='text'] {
+    -moz-appearance: textfield;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+  }
+}

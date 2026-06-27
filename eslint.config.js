@@ -2,6 +2,7 @@
 const eslint = require("@eslint/js");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
+const prettierConfig = require("eslint-config-prettier");
 
 module.exports = tseslint.config(
   {
@@ -11,7 +12,6 @@ module.exports = tseslint.config(
       ...tseslint.configs.recommended,
       ...tseslint.configs.stylistic,
       ...angular.configs.tsRecommended,
-      "prettier"
     ],
     processor: angular.processInlineTemplates,
     rules: {
@@ -31,6 +31,18 @@ module.exports = tseslint.config(
           style: "kebab-case",
         },
       ],
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          "paths": [
+            {
+              "name": "@angular/forms",
+              "allowImportNames": ["ControlValueAccessor", "NG_VALUE_ACCESSOR"],
+              "message": "Este projeto usa Signal Forms. Prefira '@angular/forms/signals'. Apenas ControlValueAccessor/NG_VALUE_ACCESSOR são permitidos para bridge de compatibilidade."
+            }
+          ]
+        }
+      ],
     },
   },
   {
@@ -40,5 +52,6 @@ module.exports = tseslint.config(
       ...angular.configs.templateAccessibility,
     ],
     rules: {},
-  }
+  },
+  prettierConfig,
 );

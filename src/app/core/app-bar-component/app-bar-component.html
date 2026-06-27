@@ -1,28 +1,29 @@
-<tui-app-bar class="black">
+<header class="app-bar" role="banner">
   @if(urlBack()) {
-    <a
-      tuiSlot="left"
-      style="padding-left: 10px"
-      [routerLink]="this.urlBack()"
-    >
-      <tui-icon
-        icon="@tui.arrow-left-to-line"
-        [style.color]="'var(--tui-text-primary-on-accent-1)'"
-      />
+    <a class="back-link" [routerLink]="this.urlBack()" aria-label="Voltar">
+      <span class="icon" aria-hidden="true">&#8592;</span>
     </a>
   }
-  {{title()}}
+  <span class="title" role="heading" aria-level="1">{{title()}}</span>
 
-  @for (button of buttons(); track button.id) {
-    <a
-      tuiSlot="right"
-      (click)="onButtonClick(button)"
-      style="padding-right: 10px"
+  <div class="actions" role="toolbar" [attr.aria-label]="'Ações do ' + title()">
+    <button
+      class="theme-toggle"
+      (click)="toggleTheme()"
+      [attr.aria-label]="isDarkMode() ? 'Ativar modo claro' : 'Ativar modo escuro'"
+      [attr.title]="isDarkMode() ? 'Modo escuro ativo' : 'Modo claro ativo'"
     >
-      <tui-icon
-        [icon]="button.icon"
-        [style.color]="'var(--tui-text-positive-hover)'"
-      />
-    </a>
-  }
-</tui-app-bar>
+      @if (isDarkMode()) {
+        <span aria-hidden="true">&#9728;&#65039;</span>
+      } @else {
+        <span aria-hidden="true">&#127769;</span>
+      }
+    </button>
+
+    @for (button of buttons(); track button.id) {
+      <button class="action-btn" (click)="onButtonClick(button)" [attr.aria-label]="button.text">
+        <span class="icon" aria-hidden="true">{{ button.icon === '@tui.circle-plus' ? '+' : '&#9998;' }}</span>
+      </button>
+    }
+  </div>
+</header>

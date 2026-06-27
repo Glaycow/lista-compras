@@ -1,45 +1,37 @@
 import {CurrencyPipe} from '@angular/common';
 import {Component, inject, linkedSignal, OnDestroy, OnInit, signal} from '@angular/core';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
-import {TuiAlertService, TuiAppearance, TuiButton, TuiIcon, TuiSurface} from '@taiga-ui/core';
-import {TUI_CONFIRM, TuiCheckbox, TuiConfirmData} from '@taiga-ui/kit';
-import {TuiCard} from '@taiga-ui/layout';
 import {NavBarButtonService} from '../../../core/service/nav-bar-button-service';
 import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
 import {ShoppingItensService} from '../../../shared/service/shopping-itens-service';
-import {ShoppingService} from '../../../shared/service/shopping-service';
+import {ConfirmDialogComponent} from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-itens-compras-lista',
   imports: [
     CurrencyPipe,
-    TuiSurface,
-    TuiIcon,
-    TuiButton,
     RouterLink,
-    TuiAppearance,
-    TuiCard,
-    ReactiveFormsModule,
-    TuiCheckbox,
-    FormsModule
+    ConfirmDialogComponent,
   ],
   templateUrl: './itens-compras-lista.html',
-  styleUrl: './itens-compras-lista.less'
+  styleUrl: './itens-compras-lista.scss'
 })
 export default class ItensComprasLista implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly navBarButtonService = inject(NavBarButtonService);
   private readonly route = inject(ActivatedRoute);
   protected readonly shoppingItensService = inject(ShoppingItensService);
-  private readonly alerts = inject(TuiAlertService);
   shoppingId = signal<number | null>(null);
   shopping = signal<Shopping | null>(null);
   items = this.shoppingItensService.shoppingItens;
   protected valorTotal = linkedSignal(() => this.items().reduce((acc, item) => acc + (item.valor * item.quantidade), 0));
   protected valorPego = linkedSignal(() => this.items().reduce((acc, item) => acc + ((item.valor * item.quantidade) * Number(item.itemMarcado)), 0));
   isLoading = signal(false);
+
+  // Confirm dialog state
+  protected readonly confirmDialogVisible = signal(false);
+  protected readonly pendingDeleteItemId = signal<number | null>(null);
 
   async ngOnInit(): Promise<void> {
    await this.getParamsRota();
@@ -54,28 +46,24 @@ export default class ItensComprasLista implements OnInit, OnDestroy {
     await this.shoppingItensService.updateItemMarcado(item).then(() => this.loadData());
   }
 
-  deleteItem(itemId: number, event: Event): void {
+  protected showDeleteConfirm(itemId: number, event: Event): void {
     event.stopPropagation();
-    const item = this.items().find(item => item.id === itemId);
-    const data: TuiConfirmData = {
-      yes: 'Sim',
-      no: 'Não',
-      content: `Deseja realmente excluir o item ${item?.nome}?`,
-    }
+    this.pendingDeleteItemId.set(itemId);
+    this.confirmDialogVisible.set(true);
+  }
 
-    this.alerts
-      .open<boolean>(TUI_CONFIRM, {
-        label: 'Deseja realmente excluir o item ?',
-        data,
-        closeable: false,
-        autoClose: 5000
-      })
-      .subscribe(async response => {
-       if(response) {
-         await this.shoppingItensService.remove(itemId);
-         await this.loadData();
-       }
-      })
+  protected async onDeleteConfirmed(): Promise<void> {
+    const id = this.pendingDeleteItemId();
+    if (id !== null) {
+      await this.shoppingItensService.remove(id).then(() => this.loadData());
+    }
+    this.confirmDialogVisible.set(false);
+    this.pendingDeleteItemId.set(null);
+  }
+
+  protected onDeleteCancelled(): void {
+    this.confirmDialogVisible.set(false);
+    this.pendingDeleteItemId.set(null);
   }
 
   private async getParamsRota(): Promise<void> {
@@ -99,7 +87,6 @@ export default class ItensComprasLista implements OnInit, OnDestroy {
       })
       .finally(() => this.isLoading.set(false));
 
-
     await this.shoppingItensService.getShoppingItensByShoppingId(this.shoppingId()!);
   }
 
@@ -113,12 +100,10 @@ export default class ItensComprasLista implements OnInit, OnDestroy {
 
   private readonly cadastrarItemCompra = (): void => void this.router.navigate([`shopping/${this.shoppingId()}/items/new`]);
 
-
   private setarButtonCreate(): void {
     this.navBarButtonService.addButton({
       text: 'Adicionar Compras',
       id: 'add-compra',
-      tuiSlot: "left",
       action: this.cadastrarItemCompra.bind(this),
       icon: '@tui.circle-plus',
       visible: true

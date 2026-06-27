@@ -1,11 +1,6 @@
-<tui-root>
-<div tuiDynamicHeaderContainer
-     class="container"
-     [tuiPlatform]="platform()"
->
-  <app-app-bar-component />
-  <div class="content">
-    <router-outlet />
-  </div>
+<app-navigation-loading />
+<app-app-bar-component />
+<app-toast />
+<div class="content">
+  <router-outlet />
 </div>
-</tui-root>

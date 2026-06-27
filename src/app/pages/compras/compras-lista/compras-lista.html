@@ -1,16 +1,17 @@
-<div class="container">
+<div class="container" role="main" aria-label="Lista de compras">
+  @if (!existeShopping()) {
+    <div class="summary-bar" role="status" aria-live="polite">
+      <span class="summary-label">Total geral das listas:</span>
+      <span class="summary-value">{{ totalGeral() | currency:'BRL':'symbol':'1.2-2' }}</span>
+    </div>
+  }
+
   <div class="shopping-list">
     @if (existeShopping()) {
-      <div tuiSurface class="empty-state">
+      <div class="empty-state">
         <div class="empty-content">
-          <tui-icon icon="@tui.shopping-cart" [style.font-size.rem]="3"></tui-icon>
           <p>Nenhuma compra encontrada</p>
-          <button
-            tuiButton
-            appearance="primary"
-            size="m"
-            routerLink="/shopping/new"
-          >
+          <button class="btn btn-primary" routerLink="/shopping/new">
             Criar primeira compra
           </button>
         </div>
@@ -18,10 +19,11 @@
     } @else {
       @for (shopping of shoppings(); track shopping.id) {
         <div
-          tuiAppearance="floating"
-          tuiCardLarge
           class="shopping-card"
           [routerLink]="['/shopping', shopping.id, 'items']"
+          [attr.aria-label]="'Ver itens de ' + shopping.nome"
+          role="link"
+          tabindex="0"
         >
           <div class="card-content">
             <div>
@@ -31,43 +33,41 @@
               <div class="card-info">
                 <p class="date">{{ shopping.data | date : 'dd/MM/yyyy' }}</p>
                 <p class="items-count">
-                  {{ shopping.id! | totalItensShopping | async }} itens
+                  {{ getItemCount(shopping.id!) }} itens
                 </p>
               </div>
               <div class="card-footer">
-                  <span class="total">
-                    Total: {{ shopping.id! | totalItensMarcados | async | currency:'BRL':'symbol':'1.2-2' }}
-                  </span>
+                <span class="total">
+                  Total: {{ getTotalMarcados(shopping.id!) | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
               </div>
             </div>
-            <div class="card-actions">
+            <div class="card-actions" role="toolbar" [attr.aria-label]="'Ações para ' + shopping.nome">
               <button
-                tuiButton
-                appearance="flat"
-                size="s"
+                class="btn btn-icon"
                 [routerLink]="['/shopping', shopping.id, 'edit']"
                 (click)="$event.stopPropagation()"
-                [style.color]="'var(--tui-text-positive-hover)'"
+                aria-label="Editar lista"
+                title="Editar lista"
               >
-                <tui-icon icon="@tui.pencil"></tui-icon>
+                &#9998;
               </button>
               <button
-                tuiButton
-                appearance="flat"
-                size="s"
+                class="btn btn-icon"
                 [routerLink]="['/shopping', shopping.id, 'items']"
                 (click)="$event.stopPropagation()"
+                aria-label="Ver itens da lista"
+                title="Ver itens"
               >
-                <tui-icon icon="@tui.list"></tui-icon>
+                &#9776;
               </button>
               <button
-                tuiButton
-                appearance="flat"
-                size="s"
-                (click)="deleteShopping(shopping.id!, $event)"
-                [style.color]="'var(--tui-text-negative-hover)'"
+                class="btn btn-icon btn-danger"
+                (click)="showDeleteConfirm(shopping.id!, $event)"
+                aria-label="Excluir lista"
+                title="Excluir lista"
               >
-                <tui-icon icon="@tui.trash"></tui-icon>
+                &#128465;
               </button>
             </div>
           </div>
@@ -76,3 +76,14 @@
     }
   </div>
 </div>
+
+<app-confirm-dialog
+  [visible]="confirmDialogVisible()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  confirmText="Sim, excluir"
+  cancelText="Cancelar"
+  ariaLabel="Confirmação de exclusão de lista"
+  (confirmed)="onDeleteConfirmed()"
+  (cancelled)="onDeleteCancelled()"
+/>

@@ -4,5 +4,4 @@ export interface NavbarButton {
   icon: string;
   action: () => void;
   visible?: boolean;
-  tuiSlot: 'right' | 'left';
 }

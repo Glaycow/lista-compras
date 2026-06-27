@@ -1,41 +1,30 @@
-<div class="container">
+<div class="container" role="main" aria-label="Itens da lista de compras">
   <div class="items-summary">
-    <div class="summary-card">
+    <div class="summary-card" role="status" aria-live="polite">
       <div class="summary-item">
         <span class="label">Total de itens:</span>
         <span class="value">{{ items().length }}</span>
       </div>
       <div class="summary-item">
-        <span class="label">total marcado / total</span>
-        <span class="value">{{ valorPego().toFixed(2) | currency: 'BRL' }} de {{ valorTotal().toFixed(2) | currency: 'BRL' }}</span>
+        <span class="label">marcado / total</span>
+        <span class="value">{{ valorPego() | currency: 'BRL' }} de {{ valorTotal() | currency: 'BRL' }}</span>
       </div>
     </div>
   </div>
 
   <div class="items-list">
     @if (items().length === 0) {
-      <div tuiSurface class="empty-state">
+      <div class="empty-state">
         <div class="empty-content">
-          <tui-icon icon="@tui.list" [style.font-size.rem]="2"></tui-icon>
           <p>Nenhum item adicionado</p>
-          <button
-            tuiButton
-            appearance="primary"
-            size="m"
-            [routerLink]="['/shopping', shoppingId(), 'items', 'new']"
-          >
+          <button class="btn btn-primary" [routerLink]="['/shopping', shoppingId(), 'items', 'new']">
             Adicionar primeiro item
           </button>
         </div>
       </div>
     } @else {
       @for (item of items(); track item.id) {
-        <div
-          class="item-card"
-          [class.marked]="item.itemMarcado"
-          tuiAppearance="floating"
-          tuiCardLarge
-        >
+        <div class="item-card" [class.marked]="item.itemMarcado" role="listitem">
           <div class="item-content">
             <div class="item-info">
               <h3 class="item-name">{{ item.nome }}</h3>
@@ -43,38 +32,36 @@
                 <p class="item-brand">{{ item.marca }}</p>
               }
               <div class="item-details">
-                <span class="quantity">Qtd: {{ item.quantidade }}</span>
-                <span class="price">Preço unitário: {{ item.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
-                <span class="total">
-                      Total: {{ (item.valor * item.quantidade) | currency:'BRL':'symbol':'1.2-2' }}
-                    </span>
+                <span class="detail">Qtd: {{ item.quantidade }}</span>
+                <span class="detail">Preço: {{ item.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="detail total">Total: {{ (item.valor * item.quantidade) | currency:'BRL':'symbol':'1.2-2' }}</span>
               </div>
             </div>
 
-            <div class="item-actions">
-
-              <input
-                checked
-                tuiCheckbox
-                type="checkbox"
-                [ngModel]="item.itemMarcado"
-                (ngModelChange)="toggleItemMarcado(item)"
-              />
+            <div class="item-actions" role="toolbar" [attr.aria-label]="'Ações para ' + item.nome">
+              <label class="checkbox-label" [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome">
+                <input
+                  type="checkbox"
+                  [checked]="item.itemMarcado"
+                  (change)="toggleItemMarcado(item)"
+                  [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome"
+                />
+              </label>
               <button
-                tuiButton
-                appearance="flat"
-                size="s"
+                class="btn btn-icon"
                 [routerLink]="['/shopping', shoppingId(), 'items', item.id, 'edit']"
+                aria-label="Editar item"
+                title="Editar item"
               >
-                <tui-icon icon="@tui.pencil" [style.color]="'var(--tui-text-positive-hover)'"></tui-icon>
+                &#9998;
               </button>
               <button
-                tuiButton
-                appearance="flat"
-                size="s"
-                (click)="deleteItem(item.id!, $event)"
+                class="btn btn-icon btn-danger"
+                (click)="showDeleteConfirm(item.id!, $event)"
+                aria-label="Excluir item"
+                title="Excluir item"
               >
-                <tui-icon icon="@tui.trash" [style.color]="'var(--tui-text-negative-hover)'"></tui-icon>
+                &#128465;
               </button>
             </div>
           </div>
@@ -82,5 +69,15 @@
       }
     }
   </div>
-
 </div>
+
+<app-confirm-dialog
+  [visible]="confirmDialogVisible()"
+  title="Excluir item"
+  message="Deseja realmente excluir este item? Esta ação não pode ser desfeita."
+  confirmText="Sim, excluir"
+  cancelText="Cancelar"
+  ariaLabel="Confirmação de exclusão de item"
+  (confirmed)="onDeleteConfirmed()"
+  (cancelled)="onDeleteCancelled()"
+/>

@@ -1,0 +1,213 @@
+.container {
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shopping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.empty-content p {
+  font-size: 16px;
+  color: var(--text-muted, #6b7280);
+  font-weight: 500;
+}
+
+/* Summary bar */
+.summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  background: var(--summary-bar-bg, #f0fdf4);
+  border: 1px solid var(--summary-bar-border, #bbf7d0);
+  border-radius: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.summary-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary, #374151);
+}
+
+.summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--summary-bar-text, #059669);
+  letter-spacing: -0.3px;
+}
+
+/* Shopping card */
+.shopping-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--card-bg, #ffffff);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover, 0 6px 16px rgba(0,0,0,0.08));
+    border-color: var(--border-hover, #d1d5db);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+  }
+}
+
+.card-content {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-header h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.date {
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+  margin: 0;
+}
+
+.items-count {
+  font-size: 12px;
+  color: var(--text-placeholder, #9ca3af);
+  margin: 0;
+  background: var(--bg-tertiary, #f3f4f6);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.card-footer .total {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--success, #059669);
+}
+
+/* Action buttons */
+.card-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: var(--btn-primary-bg, #1a1a1a);
+  color: var(--btn-primary-text, #ffffff);
+
+  &:hover {
+    background: var(--btn-primary-hover, #333333);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.btn-icon {
+  background: transparent;
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 8px 10px;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  font-family: inherit;
+
+  &:hover {
+    background: var(--bg-hover, #f3f4f6);
+    border-color: var(--border-hover, #d1d5db);
+  }
+}
+
+.btn-danger:hover {
+  background: var(--error-bg, #fef2f2);
+  color: var(--error, #dc2626);
+  border-color: var(--error-border, #fca5a5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container { padding: 12px; }
+
+  .card-content {
+    padding: 14px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .btn-icon {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 10px;
+  }
+
+  .card-header h3 { font-size: 16px; }
+}
