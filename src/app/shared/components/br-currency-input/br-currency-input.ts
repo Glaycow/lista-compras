@@ -46,9 +46,7 @@ export class BrCurrencyInput implements ControlValueAccessor {
   protected isDisabled = false;
 
   // These stubs are replaced by registerOnChange / registerOnTouched — required by ControlValueAccessor.
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private onChange: (value: number) => void = () => {};
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private onTouched: () => void = () => {};
 
   // --- ControlValueAccessor ---

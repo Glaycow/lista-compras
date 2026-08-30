@@ -1,4 +1,4 @@
-import {Component, effect, input, output, signal} from '@angular/core';
+import {Component, effect, input, output} from '@angular/core';
 
 @Component({
   selector: 'app-confirm-dialog',
@@ -14,7 +14,7 @@ import {Component, effect, input, output, signal} from '@angular/core';
       >
         <div
           class="dialog-panel"
-          (click)="$event.stopPropagation()"
+          (mousedown)="$event.stopPropagation()"
           role="document"
           tabindex="-1"
         >
