@@ -2,12 +2,19 @@
   <div class="items-summary">
     <div class="summary-card" role="status" aria-live="polite">
       <div class="summary-item">
-        <span class="label">Total de itens:</span>
-        <span class="value">{{ items().length }}</span>
+        <span class="label">Progresso</span>
+        <span class="value">{{ itensMarcados() }}/{{ items().length }}</span>
       </div>
       <div class="summary-item">
-        <span class="label">marcado / total</span>
-        <span class="value">{{ valorPego() | currency: 'BRL' }} de {{ valorTotal() | currency: 'BRL' }}</span>
+        <span class="label">Marcado</span>
+        <span class="value">{{ valorPego() | currency: 'BRL' }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Previsto</span>
+        <span class="value">{{ valorTotal() | currency: 'BRL' }}</span>
+      </div>
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" [style.width.%]="progressoPct()"></div>
       </div>
     </div>
   </div>
@@ -23,9 +30,20 @@
         </div>
       </div>
     } @else {
-      @for (item of items(); track item.id) {
-        <div class="item-card" [class.marked]="item.itemMarcado" role="listitem">
+      @for (item of itemsOrdenados(); track item.id) {
+        <div
+          class="item-card"
+          [class.marked]="item.itemMarcado"
+          role="button"
+          tabindex="0"
+          (click)="toggleItemMarcado(item)"
+          (keydown.enter)="toggleItemMarcado(item)"
+          (keydown.space)="$event.preventDefault(); toggleItemMarcado(item)"
+          [attr.aria-pressed]="item.itemMarcado"
+          [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome"
+        >
           <div class="item-content">
+            <span class="check-mark" [class.checked]="item.itemMarcado" aria-hidden="true"></span>
             <div class="item-info">
               <h3 class="item-name">{{ item.nome }}</h3>
               @if (item.marca) {
@@ -39,21 +57,14 @@
             </div>
 
             <div class="item-actions" role="toolbar" [attr.aria-label]="'Ações para ' + item.nome">
-              <label class="checkbox-label" [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome">
-                <input
-                  type="checkbox"
-                  [checked]="item.itemMarcado"
-                  (change)="toggleItemMarcado(item)"
-                  [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome"
-                />
-              </label>
               <button
                 class="btn btn-icon"
                 [routerLink]="['/shopping', shoppingId(), 'items', item.id, 'edit']"
+                (click)="$event.stopPropagation()"
                 aria-label="Editar item"
                 title="Editar item"
               >
-                &#9998;
+                <app-icon name="edit" />
               </button>
               <button
                 class="btn btn-icon btn-danger"
@@ -61,7 +72,7 @@
                 aria-label="Excluir item"
                 title="Excluir item"
               >
-                &#128465;
+                <app-icon name="trash" />
               </button>
             </div>
           </div>

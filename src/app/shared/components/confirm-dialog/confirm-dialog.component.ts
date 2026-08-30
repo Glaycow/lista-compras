@@ -1,7 +1,9 @@
 import {Component, effect, input, output} from '@angular/core';
+import {IconComponent} from '../icon/icon';
 
 @Component({
   selector: 'app-confirm-dialog',
+  imports: [IconComponent],
   template: `
     @if (visible()) {
       <div
@@ -18,7 +20,7 @@ import {Component, effect, input, output} from '@angular/core';
           role="document"
           tabindex="-1"
         >
-          <div class="dialog-icon">&#9888;</div>
+          <div class="dialog-icon"><app-icon name="warning" /></div>
           <h2 class="dialog-title">{{ title() }}</h2>
           <p class="dialog-message">{{ message() }}</p>
 
@@ -91,9 +93,13 @@ import {Component, effect, input, output} from '@angular/core';
     }
 
     .dialog-icon {
-      font-size: 40px;
       margin-bottom: 12px;
       color: var(--error, #dc2626);
+
+      app-icon {
+        width: 40px;
+        height: 40px;
+      }
     }
 
     .dialog-title {

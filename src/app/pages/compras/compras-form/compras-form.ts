@@ -3,6 +3,7 @@ import {FormField, FormRoot, form, required, minLength} from '@angular/forms/sig
 import {ActivatedRoute, Router} from '@angular/router';
 import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingService} from '../../../shared/service/shopping-service';
+import {IconComponent} from '../../../shared/components/icon/icon';
 import {ToastService} from '../../../shared/service/toast.service';
 
 interface ShoppingFormModel {
@@ -15,6 +16,7 @@ interface ShoppingFormModel {
   imports: [
     FormField,
     FormRoot,
+    IconComponent,
   ],
   templateUrl: './compras-form.html',
   styleUrl: './compras-form.scss',

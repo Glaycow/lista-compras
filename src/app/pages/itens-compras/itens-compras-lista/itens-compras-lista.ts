@@ -1,11 +1,12 @@
 import {CurrencyPipe} from '@angular/common';
-import {Component, inject, linkedSignal, OnDestroy, OnInit, signal} from '@angular/core';
+import {Component, computed, inject, linkedSignal, OnDestroy, OnInit, signal} from '@angular/core';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {NavBarButtonService} from '../../../core/service/nav-bar-button-service';
 import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
 import {ShoppingItensService} from '../../../shared/service/shopping-itens-service';
 import {ConfirmDialogComponent} from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import {IconComponent} from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-itens-compras-lista',
@@ -13,6 +14,7 @@ import {ConfirmDialogComponent} from '../../../shared/components/confirm-dialog/
     CurrencyPipe,
     RouterLink,
     ConfirmDialogComponent,
+    IconComponent,
   ],
   templateUrl: './itens-compras-lista.html',
   styleUrl: './itens-compras-lista.scss'
@@ -25,6 +27,14 @@ export default class ItensComprasLista implements OnInit, OnDestroy {
   shoppingId = signal<number | null>(null);
   shopping = signal<Shopping | null>(null);
   items = this.shoppingItensService.shoppingItens;
+  protected readonly itemsOrdenados = computed(() =>
+    [...this.items()].sort((a, b) => Number(a.itemMarcado) - Number(b.itemMarcado)),
+  );
+  protected readonly itensMarcados = computed(() => this.items().filter((item) => item.itemMarcado).length);
+  protected readonly progressoPct = computed(() => {
+    const total = this.items().length;
+    return total ? (this.itensMarcados() / total) * 100 : 0;
+  });
   protected valorTotal = linkedSignal(() => this.items().reduce((acc, item) => acc + (item.valor * item.quantidade), 0));
   protected valorPego = linkedSignal(() => this.items().reduce((acc, item) => acc + ((item.valor * item.quantidade) * Number(item.itemMarcado)), 0));
   isLoading = signal(false);
@@ -105,7 +115,7 @@ export default class ItensComprasLista implements OnInit, OnDestroy {
       text: 'Adicionar Compras',
       id: 'add-compra',
       action: this.cadastrarItemCompra.bind(this),
-      icon: '@tui.circle-plus',
+      icon: 'plus',
       visible: true
     });
   }

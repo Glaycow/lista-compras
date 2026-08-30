@@ -7,6 +7,7 @@ import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
 import {ShoppingService} from '../../../shared/service/shopping-service';
 import {ConfirmDialogComponent} from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import {IconComponent} from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-compras-lista',
@@ -15,6 +16,7 @@ import {ConfirmDialogComponent} from '../../../shared/components/confirm-dialog/
     CurrencyPipe,
     DatePipe,
     ConfirmDialogComponent,
+    IconComponent,
   ],
   templateUrl: './compras-lista.html',
   styleUrl: './compras-lista.scss',
@@ -119,7 +121,7 @@ export default class ComprasLista implements OnInit, OnDestroy {
       text: 'Adicionar Compras',
       id: 'add-compra',
       action: this.createShopping.bind(this),
-      icon: '@tui.circle-plus',
+      icon: 'plus',
       visible: true,
     });
   }

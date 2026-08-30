@@ -1,12 +1,14 @@
 import {Component, inject, OnDestroy, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
+import {IconComponent} from '../../shared/components/icon/icon';
 import {NavbarButton} from '../model/nav-bar-button';
 import {NavBarButtonService} from '../service/nav-bar-button-service';
 
 @Component({
   selector: 'app-app-bar-component',
   imports: [
-    RouterLink
+    RouterLink,
+    IconComponent,
   ],
   templateUrl: './app-bar-component.html',
   styleUrl: './app-bar-component.scss'

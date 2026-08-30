@@ -4,6 +4,7 @@ import {FormField, FormRoot, form, min, minLength, required} from '@angular/form
 import {ActivatedRoute, Router} from '@angular/router';
 import {NavBarButtonService} from '../../../core/service/nav-bar-button-service';
 import {BrCurrencyInput} from '../../../shared/components/br-currency-input/br-currency-input';
+import {IconComponent} from '../../../shared/components/icon/icon';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
 import {ShoppingItensService} from '../../../shared/service/shopping-itens-service';
 import {ToastService} from '../../../shared/service/toast.service';
@@ -23,6 +24,7 @@ interface ItemFormModel {
     FormRoot,
     BrCurrencyInput,
     CurrencyPipe,
+    IconComponent,
   ],
   templateUrl: './itens-compras-form.html',
   styleUrl: './itens-compras-form.scss',
@@ -130,6 +132,13 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
 
   goBack(): void {
     void this.router.navigate(['/shopping', this.shoppingId(), 'items']);
+  }
+
+  protected adjustQuantidade(delta: number): void {
+    this.model.update((m) => ({
+      ...m,
+      quantidade: Math.max(1, Math.floor((Number(m.quantidade) || 0) + delta)),
+    }));
   }
 
   private async loadItem(itemId: number): Promise<void> {

@@ -1,7 +1,7 @@
 <header class="app-bar" role="banner">
   @if(urlBack()) {
     <a class="back-link" [routerLink]="this.urlBack()" aria-label="Voltar">
-      <span class="icon" aria-hidden="true">&#8592;</span>
+      <app-icon name="back" />
     </a>
   }
   <span class="title" role="heading" aria-level="1">{{title()}}</span>
@@ -14,15 +14,15 @@
       [attr.title]="isDarkMode() ? 'Modo escuro ativo' : 'Modo claro ativo'"
     >
       @if (isDarkMode()) {
-        <span aria-hidden="true">&#9728;&#65039;</span>
+        <app-icon name="sun" />
       } @else {
-        <span aria-hidden="true">&#127769;</span>
+        <app-icon name="moon" />
       }
     </button>
 
     @for (button of buttons(); track button.id) {
       <button class="action-btn" (click)="onButtonClick(button)" [attr.aria-label]="button.text">
-        <span class="icon" aria-hidden="true">{{ button.icon === '@tui.circle-plus' ? '+' : '&#9998;' }}</span>
+        <app-icon [name]="button.icon === 'edit' ? 'edit' : 'plus'" />
       </button>
     }
   </div>

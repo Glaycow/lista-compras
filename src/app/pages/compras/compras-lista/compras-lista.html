@@ -50,16 +50,7 @@
                 aria-label="Editar lista"
                 title="Editar lista"
               >
-                &#9998;
-              </button>
-              <button
-                class="btn btn-icon"
-                [routerLink]="['/shopping', shopping.id, 'items']"
-                (click)="$event.stopPropagation()"
-                aria-label="Ver itens da lista"
-                title="Ver itens"
-              >
-                &#9776;
+                <app-icon name="edit" />
               </button>
               <button
                 class="btn btn-icon btn-danger"
@@ -67,7 +58,7 @@
                 aria-label="Excluir lista"
                 title="Excluir lista"
               >
-                &#128465;
+                <app-icon name="trash" />
               </button>
             </div>
           </div>

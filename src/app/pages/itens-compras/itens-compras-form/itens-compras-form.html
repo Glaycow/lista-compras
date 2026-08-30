@@ -33,16 +33,36 @@
       <div class="form-row">
         <div class="form-field">
           <label class="label" for="quantidade">Quantidade</label>
-          <input
-            id="quantidade"
-            class="input"
-            type="number"
-            [formField]="form.quantidade"
-            step="1"
-            placeholder="Quantidade"
-          />
+          <div class="qty-control">
+            <button
+              type="button"
+              class="qty-btn"
+              (click)="adjustQuantidade(-1)"
+              [disabled]="model().quantidade <= 1"
+              aria-label="Diminuir quantidade"
+            >
+              <app-icon name="minus" />
+            </button>
+            <input
+              id="quantidade"
+              class="input qty-input"
+              type="number"
+              inputmode="numeric"
+              [formField]="form.quantidade"
+              step="1"
+              placeholder="Quantidade"
+            />
+            <button
+              type="button"
+              class="qty-btn"
+              (click)="adjustQuantidade(1)"
+              aria-label="Aumentar quantidade"
+            >
+              <app-icon name="plus" />
+            </button>
+          </div>
           @if (form.quantidade().invalid() && form.quantidade().touched()) {
-            <p class="error">{{ form.quantidade().getError('min')?.message || form.quantidade().getError('required')?.message }}</p>z
+            <p class="error">{{ form.quantidade().getError('min')?.message || form.quantidade().getError('required')?.message }}</p>
           }
         </div>
 
@@ -66,7 +86,7 @@
 
       @if (submitError()) {
         <div class="error-banner">
-          <span class="error-banner-icon">&#9888;</span>
+          <span class="error-banner-icon"><app-icon name="warning" /></span>
           <span>{{ submitError() }}</span>
         </div>
       }

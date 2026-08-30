@@ -258,10 +258,20 @@ describe('ItensComprasForm', () => {
     });
 
     it('should render submit and cancel buttons', () => {
-      const buttons = fixture.nativeElement.querySelectorAll('button');
+      const buttons = fixture.nativeElement.querySelectorAll('.form-actions button');
       expect(buttons.length).toBe(2);
       expect(buttons[0].textContent).toContain('Cancelar');
       expect(buttons[1].textContent).toContain('Salvar');
+    });
+
+    it('should increment and decrement quantidade', () => {
+      expect(component['model']().quantidade).toBe(1);
+      component['adjustQuantidade'](1);
+      expect(component['model']().quantidade).toBe(2);
+      component['adjustQuantidade'](-1);
+      expect(component['model']().quantidade).toBe(1);
+      component['adjustQuantidade'](-1);
+      expect(component['model']().quantidade).toBe(1);
     });
 
     it('should display total value', () => {
