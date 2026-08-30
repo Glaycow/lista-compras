@@ -19,14 +19,11 @@ export default defineConfig({
       include: ['src/app/**/*.ts'],
       exclude: [
         'src/app/**/*.spec.ts',
-        'src/app/**/*.routes.ts',
-        'src/app/main.ts',
-        'src/app/**/model/*.ts',
-        'src/app/**/db/db-config.ts',
+        'src/**/*.html',
       ],
       thresholds: {
-        statements: 89,
-        branches: 69,
+        statements: 90,
+        branches: 90,
         functions: 90,
         lines: 90,
       },

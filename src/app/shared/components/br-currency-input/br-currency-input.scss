@@ -1,43 +1,42 @@
 .currency-wrapper {
   display: flex;
   align-items: center;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--border);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--bg-secondary);
   transition: all 0.2s ease;
   position: relative;
 
   &:hover:not(.disabled) {
-    border-color: #9ca3af;
+    border-color: var(--border-hover);
   }
 
   &.focused {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--accent-light);
   }
 
   &.disabled {
-    background: #f9fafb;
+    background: var(--bg-tertiary);
     opacity: 0.6;
     cursor: not-allowed;
   }
 
   &.has-value:not(.focused) {
-    background: #fafbff;
+    background: var(--success-bg);
 
     .currency-input {
       font-weight: 600;
-      color: #059669;
+      color: var(--success);
     }
   }
 
-  /* Validation states — via :host-context on the app-br-currency-input element */
   :host-context(.ng-touched.ng-invalid) & {
-    border-color: #dc2626;
+    border-color: var(--error);
   }
 
   :host-context(.ng-dirty.ng-valid) & {
-    border-color: #059669;
+    border-color: var(--success);
   }
 }
 
@@ -46,16 +45,16 @@
   padding: 10px 0 10px 14px;
   font-size: 15px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-muted);
   user-select: none;
   letter-spacing: 0.5px;
 
   .focused & {
-    color: #6366f1;
+    color: var(--accent);
   }
 
   .has-value:not(.focused) & {
-    color: #059669;
+    color: var(--success);
   }
 }
 
@@ -68,11 +67,10 @@
   background: transparent;
   font-size: 16px;
   font-family: inherit;
-  color: #111827;
+  color: var(--text-primary);
   outline: none;
   min-width: 0;
 
-  /* Remove spinner for number inputs */
   &::-webkit-outer-spin-button,
   &::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -84,7 +82,7 @@
   }
 
   &::placeholder {
-    color: #9ca3af;
+    color: var(--text-placeholder);
     font-weight: 400;
   }
 }

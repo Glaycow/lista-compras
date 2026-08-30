@@ -1,8 +1,12 @@
-import {Component, inject, OnDestroy, signal} from '@angular/core';
+import {Component, computed, inject, OnDestroy, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
-import {IconComponent} from '../../shared/components/icon/icon';
+import {AppIconName, IconComponent} from '../../shared/components/icon/icon';
 import {NavbarButton} from '../model/nav-bar-button';
 import {NavBarButtonService} from '../service/nav-bar-button-service';
+
+const ICON_NAMES: readonly AppIconName[] = [
+  'back', 'plus', 'minus', 'edit', 'trash', 'sun', 'moon', 'warning', 'download', 'upload',
+];
 
 @Component({
   selector: 'app-app-bar-component',
@@ -14,10 +18,13 @@ import {NavBarButtonService} from '../service/nav-bar-button-service';
   styleUrl: './app-bar-component.scss'
 })
 export class AppBarComponent implements OnDestroy {
-  private readonly nabBarButtonService = inject(NavBarButtonService);
-  readonly buttons = this.nabBarButtonService.buttons
-  readonly title = this.nabBarButtonService.titleApp;
-  readonly urlBack = this.nabBarButtonService.urlBack;
+  private readonly navBarButtonService = inject(NavBarButtonService);
+  readonly buttons = this.navBarButtonService.buttons;
+  readonly title = this.navBarButtonService.titleApp;
+  readonly urlBack = this.navBarButtonService.urlBack;
+  protected readonly visibleButtons = computed(() =>
+    this.buttons().filter((button) => button.visible !== false),
+  );
 
   protected readonly isDarkMode = signal(false);
 
@@ -34,12 +41,15 @@ export class AppBarComponent implements OnDestroy {
     } else if (saved === 'light') {
       this.isDarkMode.set(false);
       document.documentElement.setAttribute('data-theme', 'light');
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    } else if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       this.isDarkMode.set(true);
       document.documentElement.setAttribute('data-theme', 'dark');
     }
 
-    // Listen for system preference changes when user hasn't set a manual preference
+    if (typeof window.matchMedia !== 'function') {
+      return;
+    }
+
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     this.mediaQuery = mql;
     this.mediaQueryHandler = (e: MediaQueryListEvent) => {
@@ -76,5 +86,9 @@ export class AppBarComponent implements OnDestroy {
 
   onButtonClick(button: NavbarButton) {
     button.action();
+  }
+
+  protected iconName(icon: string): AppIconName {
+    return ICON_NAMES.includes(icon as AppIconName) ? icon as AppIconName : 'plus';
   }
 }

@@ -1,4 +1,4 @@
-import {Component, effect, input, output} from '@angular/core';
+import {Component, effect, ElementRef, input, output, viewChild} from '@angular/core';
 import {IconComponent} from '../icon/icon';
 
 @Component({
@@ -8,21 +8,25 @@ import {IconComponent} from '../icon/icon';
     @if (visible()) {
       <div
         class="dialog-backdrop"
+        tabindex="-1"
         (click)="onBackdropClick()"
-        (keydown.escape)="cancel()"
-        role="dialog"
-        aria-modal="true"
-        [attr.aria-label]="ariaLabel()"
+        (keydown.enter)="onBackdropClick()"
       >
         <div
+          #panel
           class="dialog-panel"
-          (mousedown)="$event.stopPropagation()"
-          role="document"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-label]="ariaLabel()"
+          [attr.aria-labelledby]="titleId"
+          [attr.aria-describedby]="messageId"
           tabindex="-1"
+          (click)="$event.stopPropagation()"
+          (keydown)="onPanelKeydown($event)"
         >
           <div class="dialog-icon"><app-icon name="warning" /></div>
-          <h2 class="dialog-title">{{ title() }}</h2>
-          <p class="dialog-message">{{ message() }}</p>
+          <h2 class="dialog-title" [id]="titleId">{{ title() }}</h2>
+          <p class="dialog-message" [id]="messageId">{{ message() }}</p>
 
           @if (confirmText() || cancelText()) {
             <div class="dialog-actions">
@@ -188,18 +192,34 @@ export class ConfirmDialogComponent {
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();
 
+  protected readonly titleId = 'confirm-dialog-title';
+  protected readonly messageId = 'confirm-dialog-message';
+
+  private readonly cancelBtn = viewChild<ElementRef<HTMLButtonElement>>('cancelBtn');
+  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
   private lastFocusedElement: HTMLElement | null = null;
 
   constructor() {
-    effect(() => {
-      if (this.visible()) {
-        // Save current focus
-        this.lastFocusedElement = document.activeElement as HTMLElement;
-      } else if (this.lastFocusedElement) {
-        // Restore focus after dialog closes
-        setTimeout(() => this.lastFocusedElement?.focus());
-        this.lastFocusedElement = null;
+    effect((onCleanup) => {
+      if (!this.visible()) {
+        if (this.lastFocusedElement) {
+          const restore = this.lastFocusedElement;
+          this.lastFocusedElement = null;
+          setTimeout(() => restore.focus());
+        }
+        return;
       }
+
+      this.lastFocusedElement = document.activeElement as HTMLElement;
+      const onDocumentKey = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          this.cancel();
+        }
+      };
+      document.addEventListener('keydown', onDocumentKey);
+      setTimeout(() => this.cancelBtn()?.nativeElement.focus());
+      onCleanup(() => document.removeEventListener('keydown', onDocumentKey));
     });
   }
 
@@ -213,5 +233,31 @@ export class ConfirmDialogComponent {
 
   protected onBackdropClick(): void {
     this.cancel();
+  }
+
+  protected onPanelKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const panel = this.panel()?.nativeElement;
+    if (!panel) {
+      return;
+    }
+
+    const focusable = Array.from(panel.querySelectorAll<HTMLElement>('button:not([disabled])'));
+    if (focusable.length === 0) {
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 }

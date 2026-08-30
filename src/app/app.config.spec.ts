@@ -1,4 +1,4 @@
-import {appConfig} from './app.config';
+import {appConfig, skipReducedMotionTransition} from './app.config';
 
 describe('appConfig', () => {
   it('should provide configuration with at least 4 providers', () => {
@@ -64,5 +64,27 @@ describe('appConfig', () => {
     // Test ng-pending
     expect(classes!['ng-pending'](mockField({ pending: true }))).toBe(true);
     expect(classes!['ng-pending'](mockField({ pending: false }))).toBe(false);
+  });
+
+  it('should skip view transitions when the user prefers reduced motion', () => {
+    const skip = vi.fn();
+    const original = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({matches: true}) as unknown as typeof window.matchMedia;
+
+    skipReducedMotionTransition({transition: {skipTransition: skip}});
+
+    expect(skip).toHaveBeenCalled();
+    window.matchMedia = original;
+  });
+
+  it('should keep view transitions when reduced motion is off', () => {
+    const skip = vi.fn();
+    const original = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({matches: false}) as unknown as typeof window.matchMedia;
+
+    skipReducedMotionTransition({transition: {skipTransition: skip}});
+
+    expect(skip).not.toHaveBeenCalled();
+    window.matchMedia = original;
   });
 });

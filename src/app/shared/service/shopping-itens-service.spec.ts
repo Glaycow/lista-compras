@@ -68,7 +68,7 @@ describe('ShoppingItensService', () => {
     };
     const id = await service.create(item);
 
-    const found = await service.geyById(id);
+    const found = await service.getById(id);
     expect(found).toBeTruthy();
     expect(found!.nome).toBe('Feijão');
     expect(found!.quantidade).toBe(1);
@@ -76,11 +76,11 @@ describe('ShoppingItensService', () => {
   });
 
   // ────────────────────────────
-  //  geyById
+  //  getById
   // ────────────────────────────
 
   it('should return undefined for non-existent item id', async () => {
-    const result = await service.geyById(999);
+    const result = await service.getById(999);
     expect(result).toBeUndefined();
   });
 
@@ -110,6 +110,37 @@ describe('ShoppingItensService', () => {
     expect(items[1].itemMarcado).toBe(true);
   });
 
+  it('should keep marked items after unmarked ones when the first compared item is marked', async () => {
+    await service.create({shoppingId: 2, nome: 'Zebra', quantidade: 1, valor: 1, itemMarcado: true});
+    await service.create({shoppingId: 2, nome: 'Abacaxi', quantidade: 1, valor: 1, itemMarcado: false});
+    await service.getShoppingItensByShoppingId(2);
+    const items = service.shoppingItens();
+    expect(items[0].nome).toBe('Abacaxi');
+    expect(items[1].nome).toBe('Zebra');
+  });
+
+  it('should treat missing marca as empty when sorting', async () => {
+    await service.create({shoppingId: 4, nome: 'Leite', quantidade: 1, valor: 1, itemMarcado: false, marca: 'B'});
+    await service.create({shoppingId: 4, nome: 'Leite', quantidade: 1, valor: 1, itemMarcado: false});
+    await service.getShoppingItensByShoppingId(4);
+    expect(service.shoppingItens()[0].marca).toBeUndefined();
+    expect(service.shoppingItens()[1].marca).toBe('B');
+  });
+
+  it('should sort unmarked items by name then marca', async () => {
+    await service.create({shoppingId: 1, nome: 'Leite', marca: 'B', quantidade: 1, valor: 1, itemMarcado: false});
+    await service.create({shoppingId: 1, nome: 'Leite', marca: 'A', quantidade: 1, valor: 1, itemMarcado: false});
+    await service.create({shoppingId: 1, nome: 'Arroz', marca: 'Z', quantidade: 1, valor: 1, itemMarcado: false});
+
+    await service.getShoppingItensByShoppingId(1);
+    const items = service.shoppingItens();
+    expect(items.map((item) => `${item.nome}-${item.marca}`)).toEqual([
+      'Arroz-Z',
+      'Leite-A',
+      'Leite-B',
+    ]);
+  });
+
   it('should set empty array for non-existent shopping', async () => {
     await service.getShoppingItensByShoppingId(999);
     expect(service.shoppingItens()).toEqual([]);
@@ -124,7 +155,7 @@ describe('ShoppingItensService', () => {
     const id = await service.create(item);
 
     await service.update({ id, shoppingId: 1, nome: 'Atualizado', quantidade: 3, valor: 15, itemMarcado: false });
-    const found = await service.geyById(id);
+    const found = await service.getById(id);
     expect(found!.nome).toBe('Atualizado');
     expect(found!.quantidade).toBe(3);
     expect(found!.valor).toBe(15);
@@ -138,7 +169,7 @@ describe('ShoppingItensService', () => {
     const item: ShoppingItem = { shoppingId: 1, nome: 'Item', quantidade: 1, valor: 10, itemMarcado: false };
     const id = await service.create(item);
     await service.updateItemMarcado({ id, shoppingId: 1, nome: 'Item', quantidade: 1, valor: 10, itemMarcado: false });
-    const found = await service.geyById(id);
+    const found = await service.getById(id);
     expect(found!.itemMarcado).toBe(true);
   });
 
@@ -146,7 +177,7 @@ describe('ShoppingItensService', () => {
     const item: ShoppingItem = { shoppingId: 1, nome: 'Item', quantidade: 1, valor: 10, itemMarcado: true };
     const id = await service.create(item);
     await service.updateItemMarcado({ id, shoppingId: 1, nome: 'Item', quantidade: 1, valor: 10, itemMarcado: true });
-    const found = await service.geyById(id);
+    const found = await service.getById(id);
     expect(found!.itemMarcado).toBe(false);
   });
 
@@ -157,10 +188,10 @@ describe('ShoppingItensService', () => {
   it('should remove an item', async () => {
     const item: ShoppingItem = { shoppingId: 1, nome: 'Remover', quantidade: 1, valor: 10, itemMarcado: false };
     const id = await service.create(item);
-    expect(await service.geyById(id)).toBeTruthy();
+    expect(await service.getById(id)).toBeTruthy();
 
     await service.remove(id);
-    expect(await service.geyById(id)).toBeUndefined();
+    expect(await service.getById(id)).toBeUndefined();
   });
 
   // ────────────────────────────
@@ -180,10 +211,10 @@ describe('ShoppingItensService', () => {
 
     await service.update({ id: id1, shoppingId: 1, nome: 'Arroz Integral', quantidade: 5, valor: 32.9, itemMarcado: false });
     await service.updateItemMarcado({ id: id1, shoppingId: 1, nome: 'Arroz Integral', quantidade: 5, valor: 32.9, itemMarcado: false });
-    const found = await service.geyById(id1);
+    const found = await service.getById(id1);
     expect(found!.itemMarcado).toBe(true);
 
     await service.remove(id1);
-    expect(await service.geyById(id1)).toBeUndefined();
+    expect(await service.getById(id1)).toBeUndefined();
   });
 });

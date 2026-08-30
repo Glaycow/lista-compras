@@ -5,6 +5,8 @@ import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingService} from '../../../shared/service/shopping-service';
 import {IconComponent} from '../../../shared/components/icon/icon';
 import {ToastService} from '../../../shared/service/toast.service';
+import {parseLocalDate, toLocalDateInput} from '../../../shared/util/local-date';
+import {parseRouteId} from '../../../shared/util/route-id';
 
 interface ShoppingFormModel {
   nome: string;
@@ -33,7 +35,7 @@ export default class ComprasForm implements OnInit {
 
   protected readonly model = signal<ShoppingFormModel>({
     nome: '',
-    data: new Date().toISOString().split('T')[0],
+    data: toLocalDateInput(new Date()),
   });
 
   protected readonly submitError = signal<string | null>(null);
@@ -45,41 +47,7 @@ export default class ComprasForm implements OnInit {
     required(p.data, { message: 'A data é obrigatória' });
   }, {
     submission: {
-      action: async () => {
-        this.submitError.set(null);
-
-        try {
-          const m = this.model();
-
-          const shopping: Shopping = {
-            id: this.isEditMode() ? this.currentShoppingId()! : undefined,
-            nome: m.nome,
-            data: new Date(m.data),
-          };
-
-          if (this.isEditMode()) {
-            await this.databaseService.update(shopping);
-          } else {
-            await this.databaseService.create(shopping);
-          }
-
-          this.isExiting.set(true);
-          this.toastService.show(
-            this.isEditMode()
-              ? 'Lista atualizada com sucesso!'
-              : 'Lista criada com sucesso!',
-          );
-          await new Promise<void>((r) => setTimeout(r, 200));
-          this.goBack();
-        } catch (err) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Ocorreu um erro inesperado ao salvar a lista. Tente novamente.';
-          this.submitError.set(message);
-          throw err;
-        }
-      },
+      action: async () => this.save(),
       onInvalid: (field) => {
         field().markAsTouched();
       },
@@ -87,7 +55,7 @@ export default class ComprasForm implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    const id = this.route.snapshot.paramMap.get('id') as number | null;
+    const id = parseRouteId(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.isEditMode.set(true);
       this.currentShoppingId.set(id);
@@ -99,15 +67,56 @@ export default class ComprasForm implements OnInit {
     void this.router.navigate(['/shopping']);
   }
 
+  protected async save(): Promise<void> {
+    this.submitError.set(null);
+
+    try {
+      const m = this.model();
+
+      const shopping: Shopping = {
+        id: this.isEditMode() ? this.currentShoppingId()! : undefined,
+        nome: m.nome,
+        data: parseLocalDate(m.data),
+      };
+
+      if (this.isEditMode()) {
+        await this.databaseService.update(shopping);
+      } else {
+        await this.databaseService.create(shopping);
+      }
+
+      this.isExiting.set(true);
+      this.toastService.show(
+        this.isEditMode()
+          ? 'Lista atualizada com sucesso!'
+          : 'Lista criada com sucesso!',
+      );
+      await new Promise<void>((r) => setTimeout(r, 200));
+      this.goBack();
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Ocorreu um erro inesperado ao salvar a lista. Tente novamente.';
+      this.submitError.set(message);
+      throw err;
+    }
+  }
+
   private async loadShopping(id: number): Promise<void> {
     this.isLoading.set(true);
-    const shopping = await this.databaseService.getById(id);
-    if (shopping) {
-      this.model.set({
-        nome: shopping.nome,
-        data: new Date(shopping.data).toISOString().split('T')[0],
-      });
+    try {
+      const shopping = await this.databaseService.getById(id);
+      if (shopping) {
+        this.model.set({
+          nome: shopping.nome,
+          data: toLocalDateInput(shopping.data),
+        });
+      } else {
+        this.goBack();
+      }
+    } finally {
+      this.isLoading.set(false);
     }
-    this.isLoading.set(false);
   }
 }

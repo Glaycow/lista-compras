@@ -6,9 +6,9 @@ import {
   platformBrowserTesting,
 } from '@angular/platform-browser/testing';
 
-// JSDOM does not implement matchMedia — mock it for all tests
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
+  configurable: true,
   value: (query: string): MediaQueryList => ({
     matches: false,
     media: query,
@@ -21,7 +21,10 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-getTestBed().initTestEnvironment(
-  BrowserTestingModule,
-  platformBrowserTesting(),
-);
+const testBed = getTestBed();
+if (!testBed.platform) {
+  testBed.initTestEnvironment(
+    BrowserTestingModule,
+    platformBrowserTesting(),
+  );
+}

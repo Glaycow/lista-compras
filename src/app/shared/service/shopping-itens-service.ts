@@ -1,33 +1,39 @@
-import {Injectable, signal} from '@angular/core';
+import {inject, Injectable, signal} from '@angular/core';
 import {DbConfig} from '../db/db-config';
 import {Shopping} from '../model/Shopping';
 import {ShoppingItem} from '../model/ShoppingItem';
 
 @Injectable({ providedIn: 'root' })
 export class ShoppingItensService {
-  private readonly db = new DbConfig();
+  private readonly db = inject(DbConfig);
   private readonly listaItens = signal<ShoppingItem[]>([]);
   shoppingItens = this.listaItens;
 
   public async getShoppingById(id: number): Promise<Shopping | undefined> {
-    return this.db.shopping.filter((shopping) => shopping.id == id).first();
+    return this.db.shopping.get(id);
   }
 
   public async getShoppingItensByShoppingId(shoppingId: number): Promise<void> {
-    await this.db.shoppingItem.filter((shoppingItem => shoppingItem.shoppingId == shoppingId)).toArray().then(
-      (shoppingItems) => {
-        this.listaItens.set(this.ordenarPorMarcado(shoppingItems));
-      }
-    );
+    const shoppingItems = await this.db.shoppingItem
+      .where('shoppingId')
+      .equals(shoppingId)
+      .toArray();
+    this.listaItens.set(this.ordenarPorMarcado(shoppingItems));
   }
 
-  public async geyById(id: number): Promise<ShoppingItem | undefined> {
-    return this.db.shoppingItem.filter((shoppingItem) => shoppingItem.id == id).first();
+  public async getById(id: number): Promise<ShoppingItem | undefined> {
+    return this.db.shoppingItem.get(id);
   }
 
   public async create(itens: ShoppingItem): Promise<number> {
-   delete itens.id;
-   return  this.db.shoppingItem.add(itens);
+    return this.db.shoppingItem.add({
+      shoppingId: itens.shoppingId,
+      nome: itens.nome,
+      marca: itens.marca,
+      quantidade: itens.quantidade,
+      valor: itens.valor,
+      itemMarcado: itens.itemMarcado,
+    });
   }
 
   public async remove(id: number): Promise<void> {
@@ -35,25 +41,22 @@ export class ShoppingItensService {
   }
 
   public async update(itens: ShoppingItem): Promise<number> {
-    return this.db.shoppingItem.filter((shoppingItem) => shoppingItem.id == itens.id!).modify(itens);
+    return this.db.shoppingItem.update(itens.id!, itens);
   }
 
   public async updateItemMarcado(item: ShoppingItem): Promise<number> {
-    return this.db.shoppingItem.filter((shoppingItem) => shoppingItem.id == item.id!).modify({ itemMarcado: !item.itemMarcado});
+    return this.db.shoppingItem.update(item.id!, {itemMarcado: !item.itemMarcado});
   }
 
   private ordenarPorMarcado(itens: ShoppingItem[]): ShoppingItem[] {
     return [...itens].sort((a, b) => {
-      // 1º critério: itemMarcado (marcados primeiro)
       if (a.itemMarcado !== b.itemMarcado) {
         return a.itemMarcado ? 1 : -1;
       }
 
-      // 2º critério: nome (ordem alfabética)
       const nomeCompare = a.nome.localeCompare(b.nome);
       if (nomeCompare !== 0) return nomeCompare;
 
-      // 3º critério: marca (ordem alfabética)
       return (a.marca || '').localeCompare(b.marca || '');
     });
   }

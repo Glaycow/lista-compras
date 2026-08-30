@@ -215,4 +215,54 @@ describe('AppBarComponent', () => {
     // Restore original mock
     window.matchMedia = originalMatchMedia;
   });
+
+  it('should apply a saved light preference on init', async () => {
+    localStorage.setItem('theme-preference', 'light');
+    const lightFixture = TestBed.createComponent(AppBarComponent);
+    lightFixture.detectChanges();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(lightFixture.componentInstance['isDarkMode']()).toBe(false);
+  });
+
+  it('should apply a saved dark preference on init', async () => {
+    localStorage.setItem('theme-preference', 'dark');
+    const darkFixture = TestBed.createComponent(AppBarComponent);
+    darkFixture.detectChanges();
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(darkFixture.componentInstance['isDarkMode']()).toBe(true);
+  });
+
+  it('should hide buttons with visible=false', () => {
+    navService.addButton({
+      id: 'hidden',
+      text: 'Oculto',
+      icon: 'plus',
+      action: vi.fn(),
+      visible: false,
+    });
+    fixture.detectChanges();
+    expect(component['visibleButtons']()).toHaveLength(0);
+  });
+
+  it('should map known and unknown icons', () => {
+    expect(component['iconName']('edit')).toBe('edit');
+    expect(component['iconName']('unknown')).toBe('plus');
+  });
+
+  it('should render the back link when urlBack is set', () => {
+    navService.setarUrlBack('/shopping');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.back-link')).toBeTruthy();
+  });
+
+  it('should skip media query setup when matchMedia is missing', () => {
+    const original = window.matchMedia;
+    // @ts-expect-error test fallback
+    window.matchMedia = undefined;
+    localStorage.removeItem('theme-preference');
+    const isolated = TestBed.createComponent(AppBarComponent);
+    isolated.detectChanges();
+    expect(isolated.componentInstance['mediaQuery']).toBeNull();
+    window.matchMedia = original;
+  });
 });

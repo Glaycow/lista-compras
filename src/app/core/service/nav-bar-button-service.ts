@@ -11,7 +11,6 @@ export class NavBarButtonService {
 
   clearButtons() {
     this._buttons.set([]);
-    this.setTitle('');
     this.urlBack.set(null);
   }
 

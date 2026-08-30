@@ -52,8 +52,22 @@
   letter-spacing: -0.3px;
 }
 
-.shopping-card {
+.data-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.import-label {
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
+  margin: 0;
+}
+
+.shopping-card {
+  display: flex;
+  align-items: center;
   border: 1px solid var(--card-border);
   border-radius: 12px;
   background: var(--card-bg);
@@ -64,11 +78,22 @@
 }
 
 .card-content {
+  flex: 1;
+  min-width: 0;
   padding: 16px 20px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: -2px;
+    border-radius: 12px;
+  }
 }
 
 .card-header h3 {
@@ -116,6 +141,7 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  padding-right: 12px;
 }
 
 @media (max-width: 768px) {

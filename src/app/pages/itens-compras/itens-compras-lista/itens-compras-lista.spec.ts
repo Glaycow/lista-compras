@@ -61,7 +61,7 @@ describe('ItensComprasLista', () => {
   it('should have shoppingId from route after init', async () => {
     await component['ngOnInit']();
     // Route params return strings; component casts 'as number' but at runtime it's a string
-    expect(component['shoppingId']()).toBeTruthy();
+    expect(component['shoppingId']()).toBe(1);
   });
 
   it('should load shopping data from route', async () => {
@@ -75,7 +75,7 @@ describe('ItensComprasLista', () => {
     await component['ngOnInit']();
     fixture.detectChanges();
     const nav = (component as unknown as { navBarButtonService: { titleApp: () => string } }).navBarButtonService;
-    expect(nav.titleApp()).toBe('lista de compras Lista Teste');
+    expect(nav.titleApp()).toBe('Lista de compras Lista Teste');
   });
 
   it('should set back url to /shopping', async () => {
@@ -93,7 +93,7 @@ describe('ItensComprasLista', () => {
   });
 
   it('should clear buttons on destroy', () => {
-    const nav = (component as unknown as { navBarButtonService: { clearButtons: () => void } }).navBarButtonService;
+    const nav = (component as unknown as { navBarButtonService: { clearButtons: () => void; buttons: () => unknown[] } }).navBarButtonService;
     component.ngOnDestroy();
     expect(nav.buttons()).toEqual([]);
   });
@@ -133,7 +133,7 @@ describe('ItensComprasLista', () => {
       id: itemId, shoppingId: 1, nome: 'Item Toggle', quantidade: 1, valor: 10, itemMarcado: false,
     });
 
-    const found = await shoppingItensService.geyById(itemId);
+    const found = await shoppingItensService.getById(itemId);
     expect(found!.itemMarcado).toBe(true);
   });
 
@@ -161,7 +161,7 @@ describe('ItensComprasLista', () => {
 
     await component['onDeleteConfirmed']();
 
-    expect(await shoppingItensService.geyById(itemId)).toBeUndefined();
+    expect(await shoppingItensService.getById(itemId)).toBeUndefined();
     expect(component['confirmDialogVisible']()).toBe(false);
     expect(component['pendingDeleteItemId']()).toBe(null);
   });
@@ -225,5 +225,115 @@ describe('ItensComprasLista', () => {
     await component['ngOnInit']();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.summary-card')).toBeTruthy();
+  });
+
+  it('should compute progresso and marked count', async () => {
+    await shoppingItensService.create({shoppingId: 1, nome: 'A', quantidade: 1, valor: 1, itemMarcado: true});
+    await shoppingItensService.create({shoppingId: 1, nome: 'B', quantidade: 1, valor: 1, itemMarcado: false});
+    await component['ngOnInit']();
+    expect(component['itensMarcados']()).toBe(1);
+    expect(component['progressoPct']()).toBe(50);
+  });
+
+  it('should keep progresso at 0 when there are no items', async () => {
+    await component['ngOnInit']();
+    expect(component['progressoPct']()).toBe(0);
+  });
+
+  it('should toast when toggle fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingItensService, 'updateItemMarcado').mockRejectedValue(new Error('fail'));
+    await component['toggleItemMarcado']({
+      id: 1, shoppingId: 1, nome: 'X', quantidade: 1, valor: 1, itemMarcado: false,
+    });
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível atualizar o item.', 'error');
+  });
+
+  it('should toast when delete fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingItensService, 'remove').mockRejectedValue(new Error('fail'));
+    component['pendingDeleteItemId'].set(1);
+    await component['onDeleteConfirmed']();
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível excluir o item.', 'error');
+  });
+
+  it('should skip delete when pending id is null', async () => {
+    const removeSpy = vi.spyOn(shoppingItensService, 'remove');
+    component['pendingDeleteItemId'].set(null);
+    await component['onDeleteConfirmed']();
+    expect(removeSpy).not.toHaveBeenCalled();
+  });
+
+  it('should toast when loadData fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    vi.spyOn(shoppingItensService, 'getShoppingById').mockRejectedValue(new Error('fail'));
+    await component['ngOnInit']();
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível carregar os itens.', 'error');
+  });
+
+  it('should navigate to new item from the create button', async () => {
+    await component['ngOnInit']();
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const nav = (component as unknown as { navBarButtonService: { buttons: () => { action: () => void }[] } }).navBarButtonService;
+    nav.buttons()[0].action();
+    expect(navigateSpy).toHaveBeenCalledWith(['/shopping/1/items/new']);
+  });
+});
+
+describe('ItensComprasLista invalid route', () => {
+  beforeEach(async () => {
+    await deleteShoppingDb();
+    await TestBed.configureTestingModule({
+      imports: [ItensComprasLista],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'abc' } } },
+        },
+      ],
+    }).compileComponents();
+  });
+
+  it('should navigate home when id is invalid', async () => {
+    const fixture = TestBed.createComponent(ItensComprasLista);
+    const component = fixture.componentInstance;
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    await component['ngOnInit']();
+    expect(navigateSpy).toHaveBeenCalledWith(['/shopping']);
+  });
+});
+
+describe('ItensComprasLista missing shopping', () => {
+  beforeEach(async () => {
+    await deleteShoppingDb();
+    await TestBed.configureTestingModule({
+      imports: [ItensComprasLista],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {snapshot: {paramMap: {get: () => '99'}}},
+        },
+      ],
+    }).compileComponents();
+  });
+
+  it('should navigate home when the shopping does not exist', async () => {
+    const fixture = TestBed.createComponent(ItensComprasLista);
+    const component = fixture.componentInstance;
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    await component['ngOnInit']();
+    expect(navigateSpy).toHaveBeenCalledWith(['/shopping']);
   });
 });

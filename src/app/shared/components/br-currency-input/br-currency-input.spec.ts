@@ -151,6 +151,21 @@ describe('BrCurrencyInput', () => {
   //  onKeydown — allow / block
   // ────────────────────────────
 
+  it('should restore the cursor after input', async () => {
+    const setSelectionRange = vi.fn();
+    const inputEvent = new InputEvent('input');
+    Object.defineProperty(inputEvent, 'target', {
+      value: {value: '99', setSelectionRange},
+    });
+    const raf = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      cb(0);
+      return 0;
+    });
+    component['onInput'](inputEvent);
+    expect(setSelectionRange).toHaveBeenCalled();
+    raf.mockRestore();
+  });
+
   it('should allow Backspace', () => {
     const event = new KeyboardEvent('keydown', {key: 'Backspace'});
     const preventDefault = vi.spyOn(event, 'preventDefault');
@@ -170,6 +185,27 @@ describe('BrCurrencyInput', () => {
     const preventDefault = vi.spyOn(event, 'preventDefault');
     component['onKeydown'](event);
     expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('should allow Delete Escape Enter and meta shortcuts', () => {
+    ['Delete', 'Escape', 'Enter'].forEach((key) => {
+      const event = new KeyboardEvent('keydown', {key});
+      const preventDefault = vi.spyOn(event, 'preventDefault');
+      component['onKeydown'](event);
+      expect(preventDefault).not.toHaveBeenCalled();
+    });
+    ['a', 'x'].forEach((key) => {
+      const event = new KeyboardEvent('keydown', {key, metaKey: true});
+      const preventDefault = vi.spyOn(event, 'preventDefault');
+      component['onKeydown'](event);
+      expect(preventDefault).not.toHaveBeenCalled();
+    });
+  });
+
+  it('should bind inputId to the inner input', () => {
+    fixture.componentRef.setInput('inputId', 'valor');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#valor')).toBeTruthy();
   });
 
   it('should allow Ctrl+V', () => {
@@ -229,6 +265,27 @@ describe('BrCurrencyInput', () => {
   // ────────────────────────────
   //  Full cycle: write → edit → blur
   // ────────────────────────────
+
+  it('should use default ControlValueAccessor stubs', () => {
+    const inputEvent = new InputEvent('input');
+    Object.defineProperty(inputEvent, 'target', {
+      value: {value: '10', setSelectionRange: vi.fn()},
+    });
+    expect(() => component['onInput'](inputEvent)).not.toThrow();
+    expect(() => component['onBlur']()).not.toThrow();
+  });
+
+  it('should handle native input events from the template', () => {
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    input.focus();
+    input.value = '250';
+    input.dispatchEvent(new Event('input', {bubbles: true}));
+    input.dispatchEvent(new KeyboardEvent('keydown', {key: '1', bubbles: true}));
+    input.blur();
+    fixture.detectChanges();
+    expect(component['isFocused']()).toBe(false);
+  });
 
   it('should restore formatted value on blur', () => {
     // Write a value, then simulate editing without changing, then blur

@@ -7,11 +7,11 @@
       </div>
       <div class="summary-item">
         <span class="label">Marcado</span>
-        <span class="value">{{ valorPego() | currency: 'BRL' }}</span>
+        <span class="value">{{ valorPego() | currency:'BRL':'symbol':'1.2-2' }}</span>
       </div>
       <div class="summary-item">
         <span class="label">Previsto</span>
-        <span class="value">{{ valorTotal() | currency: 'BRL' }}</span>
+        <span class="value">{{ valorTotal() | currency:'BRL':'symbol':'1.2-2' }}</span>
       </div>
       <div class="progress-track" aria-hidden="true">
         <div class="progress-fill" [style.width.%]="progressoPct()"></div>
@@ -20,7 +20,11 @@
   </div>
 
   <div class="items-list">
-    @if (items().length === 0) {
+    @if (isLoading() && items().length === 0) {
+      <div class="empty-state" aria-busy="true" aria-live="polite">
+        <p>Carregando...</p>
+      </div>
+    } @else if (items().length === 0) {
       <div class="empty-state">
         <div class="empty-content">
           <p>Nenhum item adicionado</p>
@@ -30,7 +34,7 @@
         </div>
       </div>
     } @else {
-      @for (item of itemsOrdenados(); track item.id) {
+      @for (item of items(); track item.id) {
         <div
           class="item-card"
           [class.marked]="item.itemMarcado"

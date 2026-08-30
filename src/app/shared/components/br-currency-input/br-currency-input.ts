@@ -23,6 +23,7 @@ import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
         (focus)="onFocus()"
         (blur)="onBlur()"
         (keydown)="onKeydown($event)"
+        [attr.id]="inputId() || null"
         [placeholder]="placeholder()"
         [disabled]="isDisabled"
       />
@@ -39,6 +40,7 @@ import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
 })
 export class BrCurrencyInput implements ControlValueAccessor {
   placeholder = input('0,00');
+  inputId = input('');
 
   private centsValue = 0;
   protected displayValue = signal('');

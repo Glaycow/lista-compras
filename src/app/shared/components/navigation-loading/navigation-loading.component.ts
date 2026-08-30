@@ -7,11 +7,9 @@ import {NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Route
     <div
       class="loading-bar"
       [class.visible]="loading()"
-      role="progressbar"
+      role="status"
       aria-label="Carregando página"
-      aria-valuemin="0"
-      aria-valuemax="100"
-      aria-valuenow="100"
+      aria-live="polite"
       [attr.aria-hidden]="!loading()"
     ></div>
   `,

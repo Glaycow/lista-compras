@@ -126,7 +126,7 @@ describe('NavBarButtonService', () => {
   //  clearButtons
   // ────────────────────────────
 
-  it('should clear all buttons, title, and urlBack', () => {
+  it('should clear buttons and urlBack without resetting the title', () => {
     service.addButton({id: 'a', text: 'A', icon: '', action: vi.fn()});
     service.setTitle('Algo');
     service.setarUrlBack('/back');
@@ -134,7 +134,7 @@ describe('NavBarButtonService', () => {
     service.clearButtons();
 
     expect(service.buttons()).toEqual([]);
-    expect(service.titleApp()).toBe('');
+    expect(service.titleApp()).toBe('Algo');
     expect(service.urlBack()).toBeNull();
   });
 

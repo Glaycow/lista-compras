@@ -3,17 +3,23 @@ import {provideRouter, withViewTransitions} from '@angular/router';
 import {provideSignalFormsConfig} from '@angular/forms/signals';
 import {routes} from './app.routes';
 
+export function skipReducedMotionTransition(event: {
+  transition: {skipTransition: () => void};
+}): void {
+  if (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    event.transition.skipTransition();
+  }
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes, withViewTransitions({
-      onViewTransitionCreated: ({transition}) => {
-        // Skip transition if user prefers reduced motion
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-          transition.skipTransition();
-        }
-      },
+      onViewTransitionCreated: skipReducedMotionTransition,
     })),
     provideSignalFormsConfig({
       classes: {

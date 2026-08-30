@@ -1,13 +1,23 @@
 <div class="container" role="main" aria-label="Lista de compras">
-  @if (!existeShopping()) {
+  @if (!listaVazia()) {
     <div class="summary-bar" role="status" aria-live="polite">
       <span class="summary-label">Total geral das listas:</span>
       <span class="summary-value">{{ totalGeral() | currency:'BRL':'symbol':'1.2-2' }}</span>
     </div>
   }
 
+  <div class="data-actions">
+    <button type="button" class="btn btn-secondary" (click)="exportLists()">
+      Exportar
+    </button>
+    <label class="btn btn-secondary import-label">
+      Importar
+      <input type="file" accept="application/json" hidden (change)="onImportFile($event)" />
+    </label>
+  </div>
+
   <div class="shopping-list">
-    @if (existeShopping()) {
+    @if (listaVazia()) {
       <div class="empty-state">
         <div class="empty-content">
           <p>Nenhuma compra encontrada</p>
@@ -18,20 +28,18 @@
       </div>
     } @else {
       @for (shopping of shoppings(); track shopping.id) {
-        <div
-          class="shopping-card"
-          [routerLink]="['/shopping', shopping.id, 'items']"
-          [attr.aria-label]="'Ver itens de ' + shopping.nome"
-          role="link"
-          tabindex="0"
-        >
-          <div class="card-content">
+        <div class="shopping-card">
+          <a
+            class="card-content"
+            [routerLink]="['/shopping', shopping.id, 'items']"
+            [attr.aria-label]="'Ver itens de ' + shopping.nome"
+          >
             <div>
               <div class="card-header">
                 <h3>{{ shopping.nome }}</h3>
               </div>
               <div class="card-info">
-                <p class="date">{{ shopping.data | date : 'dd/MM/yyyy' }}</p>
+                <p class="date">{{ formatDate(shopping.data) }}</p>
                 <p class="items-count">
                   {{ getItemCount(shopping.id!) }} itens
                 </p>
@@ -42,25 +50,24 @@
                 </span>
               </div>
             </div>
-            <div class="card-actions" role="toolbar" [attr.aria-label]="'Ações para ' + shopping.nome">
-              <button
-                class="btn btn-icon"
-                [routerLink]="['/shopping', shopping.id, 'edit']"
-                (click)="$event.stopPropagation()"
-                aria-label="Editar lista"
-                title="Editar lista"
-              >
-                <app-icon name="edit" />
-              </button>
-              <button
-                class="btn btn-icon btn-danger"
-                (click)="showDeleteConfirm(shopping.id!, $event)"
-                aria-label="Excluir lista"
-                title="Excluir lista"
-              >
-                <app-icon name="trash" />
-              </button>
-            </div>
+          </a>
+          <div class="card-actions" role="toolbar" [attr.aria-label]="'Ações para ' + shopping.nome">
+            <button
+              class="btn btn-icon"
+              [routerLink]="['/shopping', shopping.id, 'edit']"
+              aria-label="Editar lista"
+              title="Editar lista"
+            >
+              <app-icon name="edit" />
+            </button>
+            <button
+              class="btn btn-icon btn-danger"
+              (click)="showDeleteConfirm(shopping.id!, $event)"
+              aria-label="Excluir lista"
+              title="Excluir lista"
+            >
+              <app-icon name="trash" />
+            </button>
           </div>
         </div>
       }
@@ -72,9 +79,9 @@
   [visible]="confirmDialogVisible()"
   [title]="confirmTitle()"
   [message]="confirmMessage()"
-  confirmText="Sim, excluir"
+  [confirmText]="confirmKind() === 'import' ? 'Sim, importar' : 'Sim, excluir'"
   cancelText="Cancelar"
-  ariaLabel="Confirmação de exclusão de lista"
+  [ariaLabel]="confirmKind() === 'import' ? 'Confirmação de importação' : 'Confirmação de exclusão de lista'"
   (confirmed)="onDeleteConfirmed()"
   (cancelled)="onDeleteCancelled()"
 />

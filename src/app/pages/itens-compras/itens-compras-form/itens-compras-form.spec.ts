@@ -57,8 +57,7 @@ describe('ItensComprasForm', () => {
     it('should start in create mode with correct shoppingId', async () => {
       await component['ngOnInit']();
       expect(component['isEditMode']()).toBe(false);
-      // note: route params return strings; signal type is number but runtime value is string
-      expect(component['shoppingId']()).toBeTruthy();
+      expect(component['shoppingId']()).toBe(5);
       expect(component['currentItemId']()).toBeNull();
     });
 
@@ -128,11 +127,11 @@ describe('ItensComprasForm', () => {
     it('should set title on init', async () => {
       const nav = (component as unknown as { navBarButtonService: { titleApp: () => string } }).navBarButtonService;
       await component['ngOnInit']();
-      expect(nav.titleApp()).toBe('Nova Compra');
+      expect(nav.titleApp()).toBe('Novo item');
     });
 
     it('should clear nav bar buttons on destroy', () => {
-      const nav = (component as unknown as { navBarButtonService: { clearButtons: () => void } }).navBarButtonService;
+      const nav = (component as unknown as { navBarButtonService: { clearButtons: () => void; buttons: () => unknown[] } }).navBarButtonService;
       component.ngOnDestroy();
       expect(nav.buttons()).toEqual([]);
     });
@@ -141,8 +140,65 @@ describe('ItensComprasForm', () => {
       const router = (component as unknown as { router: { navigate: (path: (string | number)[]) => Promise<boolean> } }).router;
       const routerSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
       component['goBack']();
-      // shoppingId is from route param, which is string at runtime
-      expect(routerSpy).toHaveBeenCalledWith(['/shopping', '5', 'items']);
+      expect(routerSpy).toHaveBeenCalledWith(['/shopping', 5, 'items']);
+    });
+
+    it('should submit a new item', async () => {
+      await component['ngOnInit']();
+      const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+      vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const toastSpy = vi.spyOn(toastService, 'show');
+      component['model'].set({
+        nome: 'Arroz', marca: 'Tio João', quantidade: 2, valor: 10, itemMarcado: false,
+      });
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('button[type="submit"]').click();
+      await new Promise((r) => setTimeout(r, 500));
+      expect(toastSpy).toHaveBeenCalledWith('Item adicionado com sucesso!');
+      expect(component['isExiting']()).toBe(true);
+    });
+
+    it('should submit a new item without marca', async () => {
+      await component['ngOnInit']();
+      const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+      vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      component['model'].set({
+        nome: 'Feijão', marca: '', quantidade: 1, valor: 8, itemMarcado: false,
+      });
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('button[type="submit"]').click();
+      await new Promise((r) => setTimeout(r, 500));
+      expect(component['isExiting']()).toBe(true);
+    });
+
+    it('should set submitError when create throws an Error', async () => {
+      await component['ngOnInit']();
+      vi.spyOn(shoppingItensService, 'create').mockRejectedValue(new Error('falhou'));
+      component['model'].set({
+        nome: 'Arroz', marca: '', quantidade: 1, valor: 10, itemMarcado: false,
+      });
+      fixture.detectChanges();
+      await expect(component['save']()).rejects.toThrow('falhou');
+      expect(component['submitError']()).toBe('falhou');
+    });
+
+    it('should set a fallback submitError when create throws a non-Error', async () => {
+      await component['ngOnInit']();
+      vi.spyOn(shoppingItensService, 'create').mockRejectedValue('oops');
+      component['model'].set({
+        nome: 'Arroz', marca: '', quantidade: 1, valor: 10, itemMarcado: false,
+      });
+      fixture.detectChanges();
+      await expect(component['save']()).rejects.toBeTruthy();
+      expect(component['submitError']()).toBe(
+        'Ocorreu um erro inesperado ao salvar o item. Tente novamente.',
+      );
+    });
+
+    it('should mark fields as touched when invalid form is submitted', () => {
+      fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+      fixture.detectChanges();
+      expect(component['form'].nome().touched()).toBe(true);
     });
   });
 
@@ -205,7 +261,7 @@ describe('ItensComprasForm', () => {
         quantidade: 5, valor: 99.9, itemMarcado: true,
       });
 
-      const updated = await shoppingItensService.geyById(itemId);
+      const updated = await shoppingItensService.getById(itemId);
       expect(updated!.nome).toBe('Item Atualizado');
       expect(updated!.marca).toBe('Nova Marca');
       expect(updated!.quantidade).toBe(5);
@@ -216,7 +272,37 @@ describe('ItensComprasForm', () => {
       await component['ngOnInit']();
       fixture.detectChanges();
       const nav = (component as unknown as { navBarButtonService: { titleApp: () => string } }).navBarButtonService;
-      expect(nav.titleApp()).toBe('Editar Compra');
+      expect(nav.titleApp()).toBe('Editar item');
+    });
+
+    it('should submit an updated item', async () => {
+      await component['ngOnInit']();
+      const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+      vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const toastSpy = vi.spyOn(toastService, 'show');
+      component['model'].set({
+        nome: 'Item Editado', marca: 'Y', quantidade: 2, valor: 20, itemMarcado: true,
+      });
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('button[type="submit"]').click();
+      await new Promise((r) => setTimeout(r, 500));
+      expect(toastSpy).toHaveBeenCalledWith('Item atualizado com sucesso!');
+    });
+
+    it('should navigate back when the item does not exist', async () => {
+      const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      await shoppingItensService.remove(itemId);
+      await component['ngOnInit']();
+      expect(navigateSpy).toHaveBeenCalledWith(['/shopping', 10, 'items']);
+    });
+
+    it('should load an item without marca as empty string', async () => {
+      const id = await shoppingItensService.create({
+        shoppingId: 10, nome: 'Sem marca', quantidade: 1, valor: 1, itemMarcado: false,
+      });
+      await component['loadItem'](id);
+      expect(component['model']().marca).toBe('');
     });
   });
 
@@ -274,8 +360,38 @@ describe('ItensComprasForm', () => {
       expect(component['model']().quantidade).toBe(1);
     });
 
+    it('should treat invalid quantidade as 0 when adjusting', () => {
+      component['model'].update((m) => ({...m, quantidade: Number.NaN}));
+      component['adjustQuantidade'](1);
+      expect(component['model']().quantidade).toBe(1);
+    });
+
     it('should display total value', () => {
       expect(fixture.nativeElement.querySelector('.total-display')).toBeTruthy();
+    });
+  });
+
+  describe('invalid shopping route', () => {
+    beforeEach(async () => {
+      await deleteShoppingDb();
+      await TestBed.configureTestingModule({
+        imports: [ItensComprasForm],
+        providers: [
+          provideZonelessChangeDetection(),
+          provideRouter([]),
+          { provide: ActivatedRoute, useValue: createActivatedRouteMock({ shoppingId: 'abc' }) },
+        ],
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(ItensComprasForm);
+      component = fixture.componentInstance;
+    });
+
+    it('should navigate home when shoppingId is invalid', async () => {
+      const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      await component['ngOnInit']();
+      expect(navigateSpy).toHaveBeenCalledWith(['/shopping']);
     });
   });
 });

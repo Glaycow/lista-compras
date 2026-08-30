@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, input} from '@angular/core';
 
-export type AppIconName = 'back' | 'plus' | 'minus' | 'edit' | 'trash' | 'sun' | 'moon' | 'warning';
+export type AppIconName = 'back' | 'plus' | 'minus' | 'edit' | 'trash' | 'sun' | 'moon' | 'warning' | 'download' | 'upload';
 
 @Component({
   selector: 'app-icon',
@@ -46,6 +46,16 @@ export type AppIconName = 'back' | 'plus' | 'minus' | 'edit' | 'trash' | 'sun' |
       @case ('warning') {
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 9v5M12 17h.01M10.3 4.8 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.8a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      }
+      @case ('download') {
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      }
+      @case ('upload') {
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 20V8m0 0 4 4m-4-4-4 4M5 5h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       }
     }

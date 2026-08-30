@@ -88,4 +88,13 @@ describe('DbConfig', () => {
     const itemsForShopping2 = await db.shoppingItem.where('shoppingId').equals(2).toArray();
     expect(itemsForShopping2).toHaveLength(1);
   });
+
+  it('should index shopping items by marca', async () => {
+    await db.shoppingItem.add({
+      shoppingId: 1, nome: 'Arroz', marca: 'Tio João', quantidade: 1, valor: 10, itemMarcado: false,
+    });
+    const found = await db.shoppingItem.where('marca').equals('Tio João').toArray();
+    expect(found).toHaveLength(1);
+    expect(found[0].nome).toBe('Arroz');
+  });
 });

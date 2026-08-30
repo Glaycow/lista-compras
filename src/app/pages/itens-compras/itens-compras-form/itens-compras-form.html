@@ -1,9 +1,9 @@
 <div class="container">
-  <div class="form-card" [class.submitting]="form().submitting()">
-    @if (form().submitting() || isExiting()) {
-      <div class="submit-overlay" [class.exiting]="isExiting()">
+  <div class="form-card" [class.submitting]="form().submitting() || isLoading()">
+    @if (form().submitting() || isExiting() || isLoading()) {
+      <div class="submit-overlay" [class.exiting]="isExiting()" aria-busy="true" aria-live="polite">
         <div class="spinner"></div>
-        <span class="loading-text">Salvando...</span>
+        <span class="loading-text">{{ isLoading() ? 'Carregando...' : 'Salvando...' }}</span>
       </div>
     }
     <form [formRoot]="form" class="form-content">
@@ -69,7 +69,7 @@
         <div class="form-field">
           <label class="label" for="valor">Valor (R$)</label>
           <app-br-currency-input
-            id="valor"
+            inputId="valor"
             [formField]="form.valor"
             placeholder="0,00"
           />

@@ -1,7 +1,7 @@
 import {TestBed} from '@angular/core/testing';
 import {ShoppingService} from './shopping-service';
 import {Shopping} from '../model/Shopping';
-import {ShoppingItem} from '../model/ShoppingItem';
+import {ShoppingItensService} from './shopping-itens-service';
 
 async function deleteShoppingDb(): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -119,7 +119,7 @@ describe('ShoppingService', () => {
     const shopping: Shopping = { nome: 'Com Itens', data: new Date() };
     const shoppingId = await service.create(shopping);
 
-    const shoppingItensService = (service as unknown as { shoppingItensService: { create: (item: ShoppingItem) => Promise<number> } }).shoppingItensService;
+    const shoppingItensService = TestBed.inject(ShoppingItensService);
     await shoppingItensService.create({
       shoppingId, nome: 'Item Teste', quantidade: 2, valor: 10, itemMarcado: false,
     });
@@ -159,5 +159,47 @@ describe('ShoppingService', () => {
 
     expect(items.length).toBeGreaterThanOrEqual(1);
     expect(items.some((s) => s.nome === 'Nova')).toBe(true);
+  });
+
+  it('should export and import shopping data', async () => {
+    const shoppingId = await service.create({ nome: 'Backup', data: new Date('2026-01-01') });
+    await TestBed.inject(ShoppingItensService).create({
+      shoppingId, nome: 'Leite', quantidade: 1, valor: 4, itemMarcado: false,
+    });
+
+    const backup = await service.exportData();
+    expect(backup.version).toBe(1);
+    expect(backup.shopping).toHaveLength(1);
+    expect(backup.items).toHaveLength(1);
+
+    await service.remove(shoppingId);
+    expect(await service.getById(shoppingId)).toBeUndefined();
+
+    await service.importData(backup);
+    const restored = await service.getById(shoppingId);
+    expect(restored?.nome).toBe('Backup');
+    expect(await service.getShoppingItensByShoppingId(shoppingId)).toHaveLength(1);
+  });
+
+  it('should reject invalid backup payload', async () => {
+    await expect(service.importData({ version: 2 })).rejects.toThrow('Arquivo de backup inválido.');
+  });
+
+  it('should import an empty backup', async () => {
+    await service.create({nome: 'Temp', data: new Date()});
+    await service.importData({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      shopping: [],
+      items: [],
+    });
+    expect(await service.getShoppingItensByShoppingId(1)).toEqual([]);
+    const all = await new Promise<Shopping[]>((resolve) => {
+      const sub = service.shopping.subscribe((data) => {
+        resolve(data);
+        sub.unsubscribe();
+      });
+    });
+    expect(all).toEqual([]);
   });
 });

@@ -6,6 +6,7 @@ import ComprasForm from './compras-form';
 import {ShoppingService} from '../../../shared/service/shopping-service';
 import {ToastService} from '../../../shared/service/toast.service';
 import {DbConfig} from '../../../shared/db/db-config';
+import {toLocalDateInput} from '../../../shared/util/local-date';
 
 async function deleteShoppingDb(): Promise<void> {
   await new Promise<void>((resolve) => {
@@ -61,7 +62,7 @@ describe('ComprasForm', () => {
     it('should have form with default values', () => {
       const model = component['model']();
       expect(model.nome).toBe('');
-      expect(model.data).toBe(new Date().toISOString().split('T')[0]);
+      expect(model.data).toBe(toLocalDateInput(new Date()));
     });
 
     it('should set name as invalid when empty', () => {
@@ -173,6 +174,24 @@ describe('ComprasForm', () => {
       expect(toastSpy).toHaveBeenCalled();
       expect(component['isExiting']()).toBe(true);
     });
+
+    it('should set submitError when create throws an Error', async () => {
+      vi.spyOn(shoppingService, 'create').mockRejectedValue(new Error('falhou'));
+      component['model'].set({nome: 'Teste Submit', data: '2026-07-01'});
+      fixture.detectChanges();
+      await expect(component['save']()).rejects.toThrow('falhou');
+      expect(component['submitError']()).toBe('falhou');
+    });
+
+    it('should set a fallback submitError when create throws a non-Error', async () => {
+      vi.spyOn(shoppingService, 'create').mockRejectedValue('oops');
+      component['model'].set({nome: 'Teste Submit', data: '2026-07-01'});
+      fixture.detectChanges();
+      await expect(component['save']()).rejects.toBeTruthy();
+      expect(component['submitError']()).toBe(
+        'Ocorreu um erro inesperado ao salvar a lista. Tente novamente.',
+      );
+    });
   });
 
   // ────────────────────────────
@@ -230,18 +249,28 @@ describe('ComprasForm', () => {
       expect(updated!.nome).toBe('Lista Editada');
     });
 
-    it('should not fail when loadShopping is called with non-existent id', async () => {
-      // The loadShopping method should handle missing data gracefully
-      const db = new DbConfig();
-      await db.delete();
+    it('should submit the form and update a shopping', async () => {
+      await component['ngOnInit']();
+      const router = (component as unknown as { router: { navigate: (path: string[]) => Promise<boolean> } }).router;
+      vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      const toastSpy = vi.spyOn(toastService, 'show');
+      component['model'].set({nome: 'Lista Editada', data: '2026-06-15'});
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('button[type="submit"]').click();
+      await new Promise((r) => setTimeout(r, 500));
+      expect(toastSpy).toHaveBeenCalledWith('Lista atualizada com sucesso!');
+      expect(component['isExiting']()).toBe(true);
+    });
 
-      // Re-create the service's connection by getting a fresh reference
+    it('should navigate back when shopping does not exist', async () => {
+      const router = (component as unknown as { router: { navigate: (path: string[]) => Promise<boolean> } }).router;
+      const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+      await TestBed.inject(DbConfig).shopping.clear();
+
       await component['ngOnInit']();
       fixture.detectChanges();
 
-      // After loading with no data, the model should still have the data
-      // loaded by the first ngOnInit (from beforeEach)
-      expect(component['isEditMode']()).toBe(true);
+      expect(navigateSpy).toHaveBeenCalledWith(['/shopping']);
     });
   });
 

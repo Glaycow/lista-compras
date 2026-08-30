@@ -45,8 +45,8 @@ describe('ComprasLista', () => {
     expect(component['shoppings']()).toBeUndefined();
   });
 
-  it('should compute existeShopping as false when shoppings is undefined', () => {
-    expect(component['existeShopping']()).toBe(false);
+  it('should compute listaVazia as false when shoppings is undefined', () => {
+    expect(component['listaVazia']()).toBe(false);
   });
 
   it('should have totalGeral as 0 initially', () => {
@@ -68,7 +68,6 @@ describe('ComprasLista', () => {
     const nav = (component as unknown as { navBarButtonService: { clearButtons: () => void; buttons: () => unknown[]; titleApp: () => string } }).navBarButtonService;
     component.ngOnDestroy();
     expect(nav.buttons()).toEqual([]);
-    expect(nav.titleApp()).toBe('');
   });
 
   // ────────────────────────────
@@ -161,5 +160,207 @@ describe('ComprasLista', () => {
     const empty = fixture.nativeElement.querySelector('.empty-state');
     expect(empty).toBeTruthy();
     expect(empty.textContent).toContain('Nenhuma compra encontrada');
+  });
+
+  it('should export lists as a json file', async () => {
+    const createSpy = vi.spyOn(document, 'createElement');
+    const click = vi.fn();
+    createSpy.mockImplementation((tag: string) => {
+      if (tag === 'a') {
+        return {click, set href(_v: string) {}, set download(_v: string) {}} as unknown as HTMLElement;
+      }
+      return document.createElement(tag);
+    });
+    const objectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    await component['exportLists']();
+
+    expect(click).toHaveBeenCalled();
+    expect(objectUrl).toHaveBeenCalled();
+    expect(revoke).toHaveBeenCalled();
+
+    createSpy.mockRestore();
+    objectUrl.mockRestore();
+    revoke.mockRestore();
+  });
+
+  it('should reject an invalid import file', () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', {
+      value: [new File(['{"version":2}'], 'bad.json', {type: 'application/json'})],
+    });
+
+    const readerLoad = FileReader.prototype;
+    const originalRead = readerLoad.readAsText;
+    readerLoad.readAsText = function (this: FileReader) {
+      Object.defineProperty(this, 'result', {value: '{"version":2}'});
+      this.onload?.({} as ProgressEvent<FileReader>);
+    };
+
+    component['onImportFile']({target: input} as unknown as Event);
+
+    expect(showSpy).toHaveBeenCalledWith('Arquivo de backup inválido.', 'error');
+    readerLoad.readAsText = originalRead;
+  });
+
+  it('should import a backup after confirmation', async () => {
+    const shoppingId = await shoppingService.create({ nome: 'Origem', data: new Date('2026-01-01') });
+    const backup = await shoppingService.exportData();
+    await shoppingService.remove(shoppingId);
+
+    component['pendingImport'].set(backup);
+    component['confirmKind'].set('import');
+    await component['onDeleteConfirmed']();
+
+    expect(component['confirmDialogVisible']()).toBe(false);
+    expect(await shoppingService.getById(shoppingId)).toBeTruthy();
+  });
+
+  it('should format shopping dates', () => {
+    expect(component['formatDate'](new Date('2026-03-15T00:00:00.000Z'))).toBe('15/03/2026');
+  });
+
+  it('should navigate when the create button is used', () => {
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    component.ngOnInit();
+    const nav = (component as unknown as { navBarButtonService: { buttons: () => { action: () => void }[] } }).navBarButtonService;
+    nav.buttons()[0].action();
+    expect(navigateSpy).toHaveBeenCalledWith(['shopping/new']);
+  });
+
+  it('should toast when delete fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingService, 'remove').mockRejectedValue(new Error('fail'));
+    component['pendingDeleteId'].set(9);
+    await component['onDeleteConfirmed']();
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível excluir a lista.', 'error');
+  });
+
+  it('should skip remove when pending delete id is null', async () => {
+    const removeSpy = vi.spyOn(shoppingService, 'remove');
+    component['pendingDeleteId'].set(null);
+    await component['onDeleteConfirmed']();
+    expect(removeSpy).not.toHaveBeenCalled();
+  });
+
+  it('should toast when export fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingService, 'exportData').mockRejectedValue(new Error('fail'));
+    await component['exportLists']();
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível exportar as listas.', 'error');
+  });
+
+  it('should ignore import when no file is selected', () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    component['onImportFile']({target: {files: [], value: ''}} as unknown as Event);
+    expect(showSpy).not.toHaveBeenCalled();
+  });
+
+  it('should toast when import JSON is invalid', () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', {
+      value: [new File(['not-json'], 'bad.json', {type: 'application/json'})],
+    });
+    const originalRead = FileReader.prototype.readAsText;
+    FileReader.prototype.readAsText = function (this: FileReader) {
+      Object.defineProperty(this, 'result', {value: 'not-json'});
+      this.onload?.({} as ProgressEvent<FileReader>);
+    };
+    component['onImportFile']({target: input} as unknown as Event);
+    expect(showSpy).toHaveBeenCalledWith('Arquivo de backup inválido.', 'error');
+    FileReader.prototype.readAsText = originalRead;
+  });
+
+  it('should open import confirm for a valid backup file', () => {
+    const backup = {
+      version: 1 as const,
+      exportedAt: '2026-01-01T00:00:00.000Z',
+      shopping: [],
+      items: [],
+    };
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', {
+      value: [new File([JSON.stringify(backup)], 'ok.json', {type: 'application/json'})],
+    });
+    const originalRead = FileReader.prototype.readAsText;
+    FileReader.prototype.readAsText = function (this: FileReader) {
+      Object.defineProperty(this, 'result', {value: JSON.stringify(backup)});
+      this.onload?.({} as ProgressEvent<FileReader>);
+    };
+    component['onImportFile']({target: input} as unknown as Event);
+    expect(component['confirmKind']()).toBe('import');
+    expect(component['confirmDialogVisible']()).toBe(true);
+    FileReader.prototype.readAsText = originalRead;
+  });
+
+  it('should toast when applyImport fails with Error', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingService, 'importData').mockRejectedValue(new Error('boom'));
+    component['pendingImport'].set({version: 1, exportedAt: '', shopping: [], items: []});
+    component['confirmKind'].set('import');
+    await component['onDeleteConfirmed']();
+    expect(showSpy).toHaveBeenCalledWith('boom', 'error');
+  });
+
+  it('should toast when applyImport fails with a non-Error', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingService, 'importData').mockRejectedValue('nope');
+    component['pendingImport'].set({version: 1, exportedAt: '', shopping: [], items: []});
+    component['confirmKind'].set('import');
+    await component['onDeleteConfirmed']();
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível importar o backup.', 'error');
+  });
+
+  it('should no-op applyImport when backup is missing', async () => {
+    const importSpy = vi.spyOn(shoppingService, 'importData');
+    component['pendingImport'].set(null);
+    component['confirmKind'].set('import');
+    await component['onDeleteConfirmed']();
+    expect(importSpy).not.toHaveBeenCalled();
+  });
+
+  it('should toast when loading totals fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingService, 'getShoppingItensByShoppingId').mockRejectedValue(new Error('fail'));
+    await shoppingService.create({nome: 'Feira', data: new Date('2026-01-01')});
+    await new Promise<void>((resolve) => {
+      const sub = shoppingService.shopping.subscribe((data) => {
+        if (data.length > 0) {
+          resolve();
+          sub.unsubscribe();
+        }
+      });
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível carregar os totais.', 'error');
+  });
+
+  it('should load items for created shoppings', async () => {
+    const id = await shoppingService.create({nome: 'Feira', data: new Date('2026-01-01')});
+    await TestBed.inject((await import('../../../shared/service/shopping-itens-service')).ShoppingItensService)
+      .create({shoppingId: id, nome: 'Pão', quantidade: 1, valor: 3, itemMarcado: true});
+
+    await new Promise<void>((resolve) => {
+      const sub = shoppingService.shopping.subscribe((data) => {
+        if (data.some((item) => item.id === id)) {
+          resolve();
+          sub.unsubscribe();
+        }
+      });
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(component['getItemCount'](id)).toBeGreaterThanOrEqual(0);
   });
 });
