@@ -1,6 +1,7 @@
 import {ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection} from '@angular/core';
 import {provideRouter, withViewTransitions} from '@angular/router';
 import {provideSignalFormsConfig} from '@angular/forms/signals';
+import {provideSpartanHlm} from '@spartan-ng/helm/utils';
 import {routes} from './app.routes';
 
 export function skipReducedMotionTransition(event: {
@@ -16,6 +17,7 @@ export function skipReducedMotionTransition(event: {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideSpartanHlm(),
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes, withViewTransitions({

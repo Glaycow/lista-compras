@@ -76,7 +76,13 @@
   color-scheme: light;
 }
 
-/* Dark theme via data-theme attribute (set by JS based on system preference or manual toggle) */
+/*
+ * Dark theme tokens.
+ * Use :root.dark (same specificity as Spartan :root.dark in styles-spartan.css) so app
+ * brand tokens like --accent win by source order. [data-theme="dark"] alone loses to
+ * Spartan's :root.dark and turns --accent into a near-background slate.
+ */
+:root.dark,
 [data-theme="dark"] {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;

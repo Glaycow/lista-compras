@@ -27,6 +27,7 @@
               }
             ],
             "styles": [
+              "src/styles-spartan.css",
               "src/styles.scss"
             ]
           },
@@ -102,7 +103,8 @@
   "cli": {
     "analytics": "abc43223-c320-430e-bf79-dddc2d3abc4a",
     "schematicCollections": [
-      "angular-eslint"
+      "angular-eslint",
+      "@spartan-ng/cli"
     ]
   }
 }

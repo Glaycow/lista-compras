@@ -13,6 +13,7 @@ describe('AppBarComponent', () => {
     // Clear any persisted theme preference between tests
     localStorage.removeItem('theme-preference');
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
 
     await TestBed.configureTestingModule({
       imports: [AppBarComponent],
@@ -137,6 +138,7 @@ describe('AppBarComponent', () => {
     // Clear any saved preference
     localStorage.removeItem('theme-preference');
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
 
     // Get the internal handler and call it directly
     const handler = component['mediaQueryHandler'] as ((e: MediaQueryListEvent) => void) | null;
@@ -203,6 +205,7 @@ describe('AppBarComponent', () => {
     // Clean state
     localStorage.removeItem('theme-preference');
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
 
     // Create a fresh component
     const darkFixture = TestBed.createComponent(AppBarComponent);

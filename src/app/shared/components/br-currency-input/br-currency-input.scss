@@ -4,16 +4,23 @@
   border: 1.5px solid var(--border);
   border-radius: 8px;
   background: var(--bg-secondary);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   position: relative;
 
   &:hover:not(.disabled) {
     border-color: var(--border-hover);
   }
 
-  &.focused {
+  &.focused,
+  &:focus-within {
     border-color: var(--border-focus);
     box-shadow: 0 0 0 3px var(--accent-light);
+
+    .currency-prefix {
+      /* Hardcoded brand greens — independent of Spartan --accent collision */
+      color: light-dark(#059669, #34d399);
+      -webkit-text-fill-color: light-dark(#059669, #34d399);
+    }
   }
 
   &.disabled {
@@ -22,12 +29,17 @@
     cursor: not-allowed;
   }
 
-  &.has-value:not(.focused) {
+  &.has-value:not(.focused):not(:focus-within) {
     background: var(--success-bg);
 
     .currency-input {
       font-weight: 600;
       color: var(--success);
+    }
+
+    .currency-prefix {
+      color: var(--success);
+      -webkit-text-fill-color: currentColor;
     }
   }
 
@@ -46,16 +58,9 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--text-muted);
+  -webkit-text-fill-color: currentColor;
   user-select: none;
   letter-spacing: 0.5px;
-
-  .focused & {
-    color: var(--accent);
-  }
-
-  .has-value:not(.focused) & {
-    color: var(--success);
-  }
 }
 
 .currency-input {

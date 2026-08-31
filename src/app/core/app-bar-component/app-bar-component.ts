@@ -8,6 +8,21 @@ const ICON_NAMES: readonly AppIconName[] = [
   'back', 'plus', 'minus', 'edit', 'trash', 'sun', 'moon', 'warning', 'download', 'upload',
 ];
 
+function applyHtmlTheme(mode: 'dark' | 'light' | 'unset'): void {
+  const root = document.documentElement;
+  if (mode === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+    root.classList.add('dark');
+    return;
+  }
+  root.classList.remove('dark');
+  if (mode === 'light') {
+    root.setAttribute('data-theme', 'light');
+    return;
+  }
+  root.removeAttribute('data-theme');
+}
+
 @Component({
   selector: 'app-app-bar-component',
   imports: [
@@ -37,13 +52,13 @@ export class AppBarComponent implements OnDestroy {
 
     if (saved === 'dark') {
       this.isDarkMode.set(true);
-      document.documentElement.setAttribute('data-theme', 'dark');
+      applyHtmlTheme('dark');
     } else if (saved === 'light') {
       this.isDarkMode.set(false);
-      document.documentElement.setAttribute('data-theme', 'light');
+      applyHtmlTheme('light');
     } else if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       this.isDarkMode.set(true);
-      document.documentElement.setAttribute('data-theme', 'dark');
+      applyHtmlTheme('dark');
     }
 
     if (typeof window.matchMedia !== 'function') {
@@ -55,11 +70,7 @@ export class AppBarComponent implements OnDestroy {
     this.mediaQueryHandler = (e: MediaQueryListEvent) => {
       if (!localStorage.getItem('theme-preference')) {
         this.isDarkMode.set(e.matches);
-        if (e.matches) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.removeAttribute('data-theme');
-        }
+        applyHtmlTheme(e.matches ? 'dark' : 'unset');
       }
     };
     mql.addEventListener('change', this.mediaQueryHandler);
@@ -76,10 +87,10 @@ export class AppBarComponent implements OnDestroy {
     this.isDarkMode.set(newDark);
 
     if (newDark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      applyHtmlTheme('dark');
       localStorage.setItem('theme-preference', 'dark');
     } else {
-      document.documentElement.setAttribute('data-theme', 'light');
+      applyHtmlTheme('light');
       localStorage.setItem('theme-preference', 'light');
     }
   }
