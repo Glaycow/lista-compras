@@ -67,17 +67,18 @@ describe('ItensComprasForm', () => {
       expect(model.marca).toBe('');
       expect(model.quantidade).toBe(1);
       expect(model.valor).toBe(0);
+      expect(model.categoria).toBe('Outros');
     });
 
     it('should compute totalValue correctly', () => {
-      component['model'].set({ nome: 'Item', marca: '', quantidade: 3, valor: 10.5, itemMarcado: false });
+      component['model'].set({ nome: 'Item', marca: '', quantidade: 3, valor: 10.5, itemMarcado: false, categoria: 'Outros' });
       expect(component['totalValue']()).toBe(31.5);
     });
 
     it('should compute totalValue as 0 when quantidade or valor is 0', () => {
-      component['model'].set({ nome: 'Item', marca: '', quantidade: 0, valor: 10, itemMarcado: false });
+      component['model'].set({ nome: 'Item', marca: '', quantidade: 0, valor: 10, itemMarcado: false, categoria: 'Outros' });
       expect(component['totalValue']()).toBe(0);
-      component['model'].set({ nome: 'Item', marca: '', quantidade: 5, valor: 0, itemMarcado: false });
+      component['model'].set({ nome: 'Item', marca: '', quantidade: 5, valor: 0, itemMarcado: false, categoria: 'Outros' });
       expect(component['totalValue']()).toBe(0);
     });
 
@@ -87,6 +88,27 @@ describe('ItensComprasForm', () => {
       const error = fixture.nativeElement.querySelector('.error');
       expect(error).toBeTruthy();
       expect(error.textContent).toContain('obrigatório');
+    });
+
+    it('should apply frequent item to form', () => {
+      component['applyFrequentItem']({nome: 'Arroz', valor: 10, count: 2});
+      expect(component['model']().nome).toBe('Arroz');
+      expect(component['model']().valor).toBe(10);
+    });
+
+    it('should apply last price', async () => {
+      await shoppingItensService.create({shoppingId: 5, nome: 'Leite', quantidade: 1, valor: 4.5, itemMarcado: false});
+      component['model'].update((m) => ({...m, nome: 'Leite'}));
+      await vi.waitFor(() => expect(component['lastPrice']()).toBeTruthy());
+      component['applyLastPrice']();
+      expect(component['model']().valor).toBe(4.5);
+    });
+
+    it('should no-op applyLastPrice when no history', () => {
+      component['lastPrice'].set(undefined);
+      component['model'].update((m) => ({...m, valor: 3}));
+      component['applyLastPrice']();
+      expect(component['model']().valor).toBe(3);
     });
 
     it('should create an item via service', async () => {
@@ -149,7 +171,7 @@ describe('ItensComprasForm', () => {
       vi.spyOn(router, 'navigate').mockResolvedValue(true);
       const toastSpy = vi.spyOn(toastService, 'show');
       component['model'].set({
-        nome: 'Arroz', marca: 'Tio João', quantidade: 2, valor: 10, itemMarcado: false,
+        nome: 'Arroz', marca: 'Tio João', quantidade: 2, valor: 10, itemMarcado: false, categoria: 'Outros',
       });
       fixture.detectChanges();
       fixture.nativeElement.querySelector('button[type="submit"]').click();
@@ -163,7 +185,7 @@ describe('ItensComprasForm', () => {
       const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
       vi.spyOn(router, 'navigate').mockResolvedValue(true);
       component['model'].set({
-        nome: 'Feijão', marca: '', quantidade: 1, valor: 8, itemMarcado: false,
+        nome: 'Feijão', marca: '', quantidade: 1, valor: 8, itemMarcado: false, categoria: 'Outros',
       });
       fixture.detectChanges();
       fixture.nativeElement.querySelector('button[type="submit"]').click();
@@ -175,7 +197,7 @@ describe('ItensComprasForm', () => {
       await component['ngOnInit']();
       vi.spyOn(shoppingItensService, 'create').mockRejectedValue(new Error('falhou'));
       component['model'].set({
-        nome: 'Arroz', marca: '', quantidade: 1, valor: 10, itemMarcado: false,
+        nome: 'Arroz', marca: '', quantidade: 1, valor: 10, itemMarcado: false, categoria: 'Outros',
       });
       fixture.detectChanges();
       await expect(component['save']()).rejects.toThrow('falhou');
@@ -186,7 +208,7 @@ describe('ItensComprasForm', () => {
       await component['ngOnInit']();
       vi.spyOn(shoppingItensService, 'create').mockRejectedValue('oops');
       component['model'].set({
-        nome: 'Arroz', marca: '', quantidade: 1, valor: 10, itemMarcado: false,
+        nome: 'Arroz', marca: '', quantidade: 1, valor: 10, itemMarcado: false, categoria: 'Outros',
       });
       fixture.detectChanges();
       await expect(component['save']()).rejects.toBeTruthy();
@@ -281,7 +303,7 @@ describe('ItensComprasForm', () => {
       vi.spyOn(router, 'navigate').mockResolvedValue(true);
       const toastSpy = vi.spyOn(toastService, 'show');
       component['model'].set({
-        nome: 'Item Editado', marca: 'Y', quantidade: 2, valor: 20, itemMarcado: true,
+        nome: 'Item Editado', marca: 'Y', quantidade: 2, valor: 20, itemMarcado: true, categoria: 'Outros',
       });
       fixture.detectChanges();
       fixture.nativeElement.querySelector('button[type="submit"]').click();

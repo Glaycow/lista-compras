@@ -168,7 +168,7 @@ describe('ShoppingService', () => {
     });
 
     const backup = await service.exportData();
-    expect(backup.version).toBe(1);
+    expect(backup.version).toBe(2);
     expect(backup.shopping).toHaveLength(1);
     expect(backup.items).toHaveLength(1);
 
@@ -201,5 +201,124 @@ describe('ShoppingService', () => {
       });
     });
     expect(all).toEqual([]);
+  });
+
+  it('should duplicate a shopping list with items', async () => {
+    const shoppingId = await service.create({nome: 'Original', data: new Date()});
+    await TestBed.inject(ShoppingItensService).create({
+      shoppingId, nome: 'Leite', quantidade: 1, valor: 5, itemMarcado: true,
+    });
+
+    const newId = await service.duplicate(shoppingId);
+    const copy = await service.getById(newId);
+    expect(copy?.nome).toBe('Original (cópia)');
+
+    const items = await service.getShoppingItensByShoppingId(newId);
+    expect(items).toHaveLength(1);
+    expect(items[0].itemMarcado).toBe(false);
+  });
+
+  it('should export a single list', async () => {
+    const shoppingId = await service.create({nome: 'Export', data: new Date()});
+    const exported = await service.exportList(shoppingId);
+    expect(exported.shopping.nome).toBe('Export');
+    expect(exported.version).toBe(1);
+  });
+
+  it('should merge import data', async () => {
+    const id1 = await service.create({nome: 'A', data: new Date()});
+    await service.importData({
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      shopping: [{nome: 'B', data: new Date()}],
+      items: [],
+    }, true);
+
+    const all = await new Promise<Shopping[]>((resolve) => {
+      const sub = service.shopping.subscribe((data) => {
+        resolve(data);
+        sub.unsubscribe();
+      });
+    });
+    expect(all.length).toBeGreaterThanOrEqual(2);
+    expect(await service.getById(id1)).toBeTruthy();
+  });
+
+  it('should merge import data whose ids collide with existing records', async () => {
+    const shoppingId = await service.create({nome: 'Original', data: new Date()});
+    await TestBed.inject(ShoppingItensService).create({
+      shoppingId, nome: 'Leite', quantidade: 1, valor: 5, itemMarcado: false,
+    });
+
+    const backup = await service.exportData();
+    await service.importData(backup, true);
+
+    const all = await new Promise<Shopping[]>((resolve) => {
+      const sub = service.shopping.subscribe((data) => { resolve(data); sub.unsubscribe(); });
+    });
+    expect(all).toHaveLength(2);
+
+    const merged = all.find((s) => s.id !== shoppingId);
+    expect(merged).toBeTruthy();
+    const mergedItems = await service.getShoppingItensByShoppingId(merged!.id!);
+    expect(mergedItems).toHaveLength(1);
+    expect(mergedItems[0].nome).toBe('Leite');
+
+    const originalItems = await service.getShoppingItensByShoppingId(shoppingId);
+    expect(originalItems).toHaveLength(1);
+  });
+
+  it('should import a single list backup as a new list', async () => {
+    const shoppingId = await service.create({nome: 'Origem', data: new Date()});
+    await TestBed.inject(ShoppingItensService).create({
+      shoppingId, nome: 'Arroz', quantidade: 2, valor: 8, itemMarcado: false,
+    });
+
+    const backup = await service.exportList(shoppingId);
+    const newId = await service.importList(backup);
+
+    expect(newId).not.toBe(shoppingId);
+    const imported = await service.getById(newId);
+    expect(imported?.nome).toBe('Origem');
+    const items = await service.getShoppingItensByShoppingId(newId);
+    expect(items).toHaveLength(1);
+    expect(items[0].nome).toBe('Arroz');
+
+    const original = await service.getById(shoppingId);
+    expect(original).toBeTruthy();
+  });
+
+  it('should reject an invalid single-list backup payload', async () => {
+    await expect(service.importList({version: 1})).rejects.toThrow('Arquivo de lista inválido.');
+  });
+
+  it('should create from template', async () => {
+    const template = service.getTemplates()[0];
+    const id = await service.createFromTemplate(template);
+    const items = await service.getShoppingItensByShoppingId(id);
+    expect(items.length).toBe(template.itens.length);
+  });
+
+  it('should restore a deleted shopping', async () => {
+    const shopping: Shopping = {nome: 'Restaurar', data: new Date()};
+    const id = await service.create(shopping);
+    const items = [{shoppingId: id, nome: 'Item', quantidade: 1, valor: 1, itemMarcado: false}];
+    await service.remove(id);
+    await service.restore({...shopping, id}, items);
+    const all = await new Promise<Shopping[]>((resolve) => {
+      const sub = service.shopping.subscribe((data) => {
+        resolve(data);
+        sub.unsubscribe();
+      });
+    });
+    expect(all.some((s) => s.nome === 'Restaurar')).toBe(true);
+  });
+
+  it('should throw when duplicating non-existent list', async () => {
+    await expect(service.duplicate(999)).rejects.toThrow('Lista não encontrada.');
+  });
+
+  it('should throw when exporting non-existent list', async () => {
+    await expect(service.exportList(999)).rejects.toThrow('Lista não encontrada.');
   });
 });

@@ -5,6 +5,7 @@ import {ShoppingService} from '../../../shared/service/shopping-service';
 
 import ComprasLista from './compras-lista';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
+import {Shopping} from '../../../shared/model/Shopping';
 
 async function deleteShoppingDb(): Promise<void> {
   await new Promise<void>((resolve) => {
@@ -49,8 +50,8 @@ describe('ComprasLista', () => {
     expect(component['listaVazia']()).toBe(false);
   });
 
-  it('should have totalGeral as 0 initially', () => {
-    expect(component['totalGeral']()).toBe(0);
+  it('should have totalGeralMarcado as 0 initially', () => {
+    expect(component['totalGeralMarcado']()).toBe(0);
   });
 
   // ────────────────────────────
@@ -122,14 +123,14 @@ describe('ComprasLista', () => {
   //  totalGeral / getTotalMarcados computation
   // ────────────────────────────
 
-  it('should compute totalGeral correctly when items are loaded', () => {
+  it('should compute totalGeralMarcado correctly when items are loaded', () => {
     const itemsByShopping = (component as unknown as { itemsByShopping: { set: (_: Map<number, ShoppingItem[]>) => void } }).itemsByShopping;
     itemsByShopping.set(new Map([[1, [
       { shoppingId: 1, nome: 'Item 1', quantidade: 2, valor: 10, itemMarcado: true },
       { shoppingId: 1, nome: 'Item 2', quantidade: 1, valor: 5, itemMarcado: false },
       { shoppingId: 1, nome: 'Item 3', quantidade: 3, valor: 20, itemMarcado: true },
     ] as ShoppingItem[]]]));
-    expect(component['totalGeral']()).toBe(80);
+    expect(component['totalGeralMarcado']()).toBe(80);
   });
 
   it('should compute getTotalMarcados correctly', () => {
@@ -280,6 +281,57 @@ describe('ComprasLista', () => {
     FileReader.prototype.readAsText = originalRead;
   });
 
+  it('should import a single list and navigate to it', async () => {
+    const shoppingId = await shoppingService.create({ nome: 'Origem', data: new Date('2026-01-01') });
+    const backup = await shoppingService.exportList(shoppingId);
+
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', {
+      value: [new File([JSON.stringify(backup)], 'lista.json', { type: 'application/json' })],
+    });
+    const originalRead = FileReader.prototype.readAsText;
+    FileReader.prototype.readAsText = function (this: FileReader) {
+      Object.defineProperty(this, 'result', { value: JSON.stringify(backup) });
+      this.onload?.({} as ProgressEvent<FileReader>);
+    };
+
+    component['onImportListFile']({ target: input } as unknown as Event);
+    await vi.waitFor(() => expect(navigateSpy).toHaveBeenCalled());
+    FileReader.prototype.readAsText = originalRead;
+
+    const newId = navigateSpy.mock.calls[0][0][1] as number;
+    expect(newId).not.toBe(shoppingId);
+    expect(await shoppingService.getById(newId)).toBeTruthy();
+  });
+
+  it('should toast when single-list import file is invalid', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', {
+      value: [new File(['not-json'], 'bad.json', { type: 'application/json' })],
+    });
+    const originalRead = FileReader.prototype.readAsText;
+    FileReader.prototype.readAsText = function (this: FileReader) {
+      Object.defineProperty(this, 'result', { value: 'not-json' });
+      this.onload?.({} as ProgressEvent<FileReader>);
+    };
+
+    component['onImportListFile']({ target: input } as unknown as Event);
+    await vi.waitFor(() => expect(showSpy).toHaveBeenCalledWith('Arquivo de lista inválido.', 'error'));
+    FileReader.prototype.readAsText = originalRead;
+  });
+
+  it('should ignore single-list import when no file is selected', () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    component['onImportListFile']({ target: { files: [], value: '' } } as unknown as Event);
+    expect(showSpy).not.toHaveBeenCalled();
+  });
+
   it('should open import confirm for a valid backup file', () => {
     const backup = {
       version: 1 as const,
@@ -362,5 +414,90 @@ describe('ComprasLista', () => {
     });
     await new Promise((r) => setTimeout(r, 50));
     expect(component['getItemCount'](id)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should toggle templates panel', () => {
+    expect(component['showTemplates']()).toBe(false);
+    component['toggleTemplates']();
+    expect(component['showTemplates']()).toBe(true);
+  });
+
+  it('should compute getTotalPrevisto correctly', () => {
+    const itemsByShopping = (component as unknown as { itemsByShopping: { set: (_: Map<number, ShoppingItem[]>) => void } }).itemsByShopping;
+    itemsByShopping.set(new Map([[1, [
+      { shoppingId: 1, nome: 'Item 1', quantidade: 2, valor: 10, itemMarcado: true },
+      { shoppingId: 1, nome: 'Item 2', quantidade: 1, valor: 5, itemMarcado: false },
+    ] as ShoppingItem[]]]));
+    expect(component['getTotalPrevisto'](1)).toBe(25);
+  });
+
+  it('should duplicate a list', async () => {
+    const id = await shoppingService.create({nome: 'Dup', data: new Date()});
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const event = new MouseEvent('click');
+    vi.spyOn(event, 'stopPropagation');
+    await component['duplicateList'](id, event);
+    expect(navigateSpy).toHaveBeenCalled();
+  });
+
+  it('should merge import after confirmation', async () => {
+    await shoppingService.create({nome: 'A', data: new Date()});
+    component['pendingImport'].set({
+      version: 2, exportedAt: '', shopping: [{nome: 'B', data: new Date()}], items: [],
+    });
+    component['confirmKind'].set('import-merge');
+    await component['onDeleteConfirmed']();
+    const all = await new Promise<Shopping[]>((resolve) => {
+      const sub = shoppingService.shopping.subscribe((data) => {
+        resolve(data);
+        sub.unsubscribe();
+      });
+    });
+    expect(all.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('should undo delete via toast action', async () => {
+    const id = await shoppingService.create({nome: 'Undo', data: new Date()});
+    const toast = (component as unknown as { toastService: { showWithAction: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'showWithAction');
+    component['pendingDeleteId'].set(id);
+    await component['onDeleteConfirmed']();
+    expect(showSpy).toHaveBeenCalled();
+    const callback = showSpy.mock.calls[0][1] as {callback: () => void};
+    await callback.callback();
+  });
+
+  it('should export single list', async () => {
+    const id = await shoppingService.create({nome: 'Single', data: new Date()});
+    const createSpy = vi.spyOn(document, 'createElement');
+    const click = vi.fn();
+    createSpy.mockImplementation((tag: string) => {
+      if (tag === 'a') {
+        return {click, set href(_v: string) {}, set download(_v: string) {}} as unknown as HTMLElement;
+      }
+      return document.createElement(tag);
+    });
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const event = new MouseEvent('click');
+    await component['exportSingleList'](id, event);
+    expect(click).toHaveBeenCalled();
+    createSpy.mockRestore();
+  });
+
+  it('should create from template', async () => {
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    await component['createFromTemplate'](component['templates'][0].id);
+    expect(navigateSpy).toHaveBeenCalled();
+  });
+
+  it('should toast when export single list fails', async () => {
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingService, 'exportList').mockRejectedValue(new Error('fail'));
+    await component['exportSingleList'](999, new MouseEvent('click'));
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível exportar a lista.', 'error');
   });
 });

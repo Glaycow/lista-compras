@@ -1,20 +1,51 @@
 <div class="container" role="main" aria-label="Lista de compras">
   @if (!listaVazia()) {
     <div class="summary-bar" role="status" aria-live="polite">
-      <span class="summary-label">Total geral das listas:</span>
-      <span class="summary-value">{{ totalGeral() | currency:'BRL':'symbol':'1.2-2' }}</span>
+      <div class="summary-row">
+        <span class="summary-label">Marcado:</span>
+        <span class="summary-value">{{ totalGeralMarcado() | currency:'BRL':'symbol':'1.2-2' }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Previsto:</span>
+        <span class="summary-value muted">{{ totalGeralPrevisto() | currency:'BRL':'symbol':'1.2-2' }}</span>
+      </div>
     </div>
   }
 
   <div class="data-actions">
-    <button type="button" class="btn btn-secondary" (click)="exportLists()">
-      Exportar
+    <button type="button" hlmBtn variant="outline" (click)="exportLists()">
+      <app-icon name="download" /> Exportar
     </button>
     <label class="btn btn-secondary import-label">
-      Importar
+      <app-icon name="upload" /> Importar
       <input type="file" accept="application/json" hidden (change)="onImportFile($event)" />
     </label>
+    <label class="btn btn-secondary import-label">
+      Mesclar
+      <input type="file" accept="application/json" hidden (change)="onImportFile($event, true)" />
+    </label>
+    <label class="btn btn-secondary import-label">
+      Importar lista
+      <input type="file" accept="application/json" hidden (change)="onImportListFile($event)" />
+    </label>
+    <button type="button" hlmBtn variant="outline" routerLink="/shopping/stats">
+      Estatísticas
+    </button>
+    <button type="button" hlmBtn variant="outline" (click)="toggleTemplates()">
+      Templates
+    </button>
   </div>
+
+  @if (showTemplates()) {
+    <div class="templates-panel" role="region" aria-label="Templates de lista">
+      @for (template of templates; track template.id) {
+        <button type="button" class="template-card" (click)="createFromTemplate(template.id)">
+          <span class="template-name">{{ template.nome }}</span>
+          <span class="template-count">{{ template.itens.length }} itens</span>
+        </button>
+      }
+    </div>
+  }
 
   <div class="shopping-list">
     @if (listaVazia()) {
@@ -46,12 +77,31 @@
               </div>
               <div class="card-footer">
                 <span class="total">
-                  Total: {{ getTotalMarcados(shopping.id!) | currency:'BRL':'symbol':'1.2-2' }}
+                  Marcado: {{ getTotalMarcados(shopping.id!) | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+                <span class="total-previsto">
+                  Previsto: {{ getTotalPrevisto(shopping.id!) | currency:'BRL':'symbol':'1.2-2' }}
                 </span>
               </div>
             </div>
           </a>
           <div class="card-actions" role="toolbar" [attr.aria-label]="'Ações para ' + shopping.nome">
+            <button
+              class="btn btn-icon"
+              (click)="duplicateList(shopping.id!, $event)"
+              aria-label="Duplicar lista"
+              title="Duplicar lista"
+            >
+              <app-icon name="plus" />
+            </button>
+            <button
+              class="btn btn-icon"
+              (click)="exportSingleList(shopping.id!, $event)"
+              aria-label="Exportar lista"
+              title="Exportar lista"
+            >
+              <app-icon name="download" />
+            </button>
             <button
               class="btn btn-icon"
               [routerLink]="['/shopping', shopping.id, 'edit']"
@@ -79,9 +129,9 @@
   [visible]="confirmDialogVisible()"
   [title]="confirmTitle()"
   [message]="confirmMessage()"
-  [confirmText]="confirmKind() === 'import' ? 'Sim, importar' : 'Sim, excluir'"
+  [confirmText]="confirmKind() === 'delete' ? 'Sim, excluir' : 'Sim, continuar'"
   cancelText="Cancelar"
-  [ariaLabel]="confirmKind() === 'import' ? 'Confirmação de importação' : 'Confirmação de exclusão de lista'"
+  [ariaLabel]="confirmKind() === 'delete' ? 'Confirmação de exclusão de lista' : 'Confirmação de importação'"
   (confirmed)="onDeleteConfirmed()"
   (cancelled)="onDeleteCancelled()"
 />

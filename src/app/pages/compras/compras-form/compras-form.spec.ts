@@ -70,7 +70,7 @@ describe('ComprasForm', () => {
     });
 
     it('should set name as valid when filled with 2+ chars', () => {
-      component['model'].set({ nome: 'Feira', data: '2026-01-15' });
+      component['model'].set({ nome: 'Feira', data: '2026-01-15', orcamento: null });
       fixture.detectChanges();
       expect(component['form'].nome().valid()).toBe(true);
     });
@@ -161,7 +161,7 @@ describe('ComprasForm', () => {
 
     it('should submit the form and create a shopping when valid', async () => {
       const toastSpy = vi.spyOn(toastService, 'show');
-      component['model'].set({ nome: 'Teste Submit', data: '2026-07-01' });
+      component['model'].set({ nome: 'Teste Submit', data: '2026-07-01', orcamento: null });
       fixture.detectChanges();
 
       const submitBtn = fixture.nativeElement.querySelector('button[type="submit"]');
@@ -175,9 +175,16 @@ describe('ComprasForm', () => {
       expect(component['isExiting']()).toBe(true);
     });
 
+    it('should save shopping with orcamento', async () => {
+      component['model'].set({nome: 'Com orçamento', data: '2026-07-01', orcamento: 150});
+      await component['save']();
+      const created = await shoppingService.getById(1);
+      expect(created?.orcamento).toBe(150);
+    });
+
     it('should set submitError when create throws an Error', async () => {
       vi.spyOn(shoppingService, 'create').mockRejectedValue(new Error('falhou'));
-      component['model'].set({nome: 'Teste Submit', data: '2026-07-01'});
+      component['model'].set({nome: 'Teste Submit', data: '2026-07-01', orcamento: null});
       fixture.detectChanges();
       await expect(component['save']()).rejects.toThrow('falhou');
       expect(component['submitError']()).toBe('falhou');
@@ -185,7 +192,7 @@ describe('ComprasForm', () => {
 
     it('should set a fallback submitError when create throws a non-Error', async () => {
       vi.spyOn(shoppingService, 'create').mockRejectedValue('oops');
-      component['model'].set({nome: 'Teste Submit', data: '2026-07-01'});
+      component['model'].set({nome: 'Teste Submit', data: '2026-07-01', orcamento: null});
       fixture.detectChanges();
       await expect(component['save']()).rejects.toBeTruthy();
       expect(component['submitError']()).toBe(
@@ -254,7 +261,7 @@ describe('ComprasForm', () => {
       const router = (component as unknown as { router: { navigate: (path: string[]) => Promise<boolean> } }).router;
       vi.spyOn(router, 'navigate').mockResolvedValue(true);
       const toastSpy = vi.spyOn(toastService, 'show');
-      component['model'].set({nome: 'Lista Editada', data: '2026-06-15'});
+      component['model'].set({nome: 'Lista Editada', data: '2026-06-15', orcamento: null});
       fixture.detectChanges();
       fixture.nativeElement.querySelector('button[type="submit"]').click();
       await new Promise((r) => setTimeout(r, 500));

@@ -30,13 +30,19 @@
 
 .summary-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 6px;
   padding: 14px 20px;
   margin-bottom: 20px;
   background: var(--summary-bar-bg);
   border: 1px solid var(--summary-bar-border);
   border-radius: 12px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .summary-label {
@@ -129,10 +135,63 @@
   border-radius: 12px;
 }
 
+.summary-value.muted {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.templates-panel {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--accent);
+  }
+}
+
+.template-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.template-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .card-footer .total {
   font-weight: 600;
   font-size: 15px;
   color: var(--success);
+}
+
+.card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.total-previsto {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .card-actions {

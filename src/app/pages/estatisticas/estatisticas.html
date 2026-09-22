@@ -1,0 +1,85 @@
+<div class="container" role="main" aria-label="Estatísticas de compras">
+  @if (isLoading()) {
+    <div class="empty-state" aria-busy="true">
+      <p>Carregando estatísticas...</p>
+    </div>
+  } @else if (!hasData()) {
+    <div class="empty-state">
+      <p>Sem dados suficientes para exibir estatísticas.</p>
+      <a routerLink="/shopping" hlmBtn>Voltar às listas</a>
+    </div>
+  } @else {
+    @if (monthlySpending().length > 0) {
+      <section class="stats-section" aria-labelledby="monthly-title">
+        <h2 id="monthly-title" class="section-title">Gasto mensal</h2>
+        <p class="section-hint">Soma dos itens marcados por mês</p>
+        <div class="monthly-chart" role="list">
+          @for (month of monthlySpending(); track month.monthKey) {
+            <div class="month-row" role="listitem">
+              <span class="month-label">{{ month.label }}</span>
+              <div class="bar-track" aria-hidden="true">
+                <div class="bar-fill" [style.width.%]="barWidth(month.total)"></div>
+              </div>
+              <span class="month-value">{{ month.total | currency:'BRL':'symbol':'1.2-2' }}</span>
+              <span class="month-meta">{{ month.listCount }} lista(s)</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (topItems().length > 0) {
+      <section class="stats-section" aria-labelledby="top-title">
+        <h2 id="top-title" class="section-title">Itens mais comprados</h2>
+        <div class="ranked-list">
+          @for (item of topItems(); track item.nome + (item.marca ?? ''); let i = $index) {
+            <div class="ranked-item">
+              <span class="rank">{{ i + 1 }}</span>
+              <div class="ranked-info">
+                <span class="ranked-name">{{ item.nome }}</span>
+                @if (item.marca) {
+                  <span class="ranked-brand">{{ item.marca }}</span>
+                }
+              </div>
+              <div class="ranked-stats">
+                <span class="ranked-count">{{ item.count }}x</span>
+                <span class="ranked-total">{{ item.totalSpent | currency:'BRL':'symbol':'1.2-2' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    @if (priceEvolutions().length > 0) {
+      <section class="stats-section" aria-labelledby="price-title">
+        <h2 id="price-title" class="section-title">Evolução de preços</h2>
+        <p class="section-hint">Produtos com histórico de alteração de preço</p>
+        <div class="price-list">
+          @for (item of priceEvolutions(); track item.nome + (item.marca ?? '')) {
+            <div class="price-item">
+              <div class="price-info">
+                <span class="price-name">{{ item.nome }}</span>
+                @if (item.marca) {
+                  <span class="price-brand">{{ item.marca }}</span>
+                }
+              </div>
+              <div class="price-values">
+                <span class="price-old">{{ item.firstPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="price-arrow" aria-hidden="true">→</span>
+                <span class="price-new">{{ item.lastPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span
+                  class="price-change"
+                  [class.up]="item.changePct > 0"
+                  [class.down]="item.changePct < 0"
+                >
+                  {{ item.changePct > 0 ? '+' : '' }}{{ item.changePct | number:'1.0-1' }}%
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

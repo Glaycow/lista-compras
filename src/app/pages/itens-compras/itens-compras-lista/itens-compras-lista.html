@@ -11,12 +11,50 @@
       </div>
       <div class="summary-item">
         <span class="label">Previsto</span>
-        <span class="value">{{ valorTotal() | currency:'BRL':'symbol':'1.2-2' }}</span>
+        <span class="value" [class.over-budget]="orcamentoExcedido()">
+          {{ valorTotal() | currency:'BRL':'symbol':'1.2-2' }}
+        </span>
       </div>
+      @if (shopping()?.orcamento) {
+        <div class="summary-item">
+          <span class="label">Orçamento</span>
+          <span class="value" [class.over-budget]="orcamentoExcedido()">
+            {{ shopping()!.orcamento | currency:'BRL':'symbol':'1.2-2' }}
+          </span>
+        </div>
+      }
       <div class="progress-track" aria-hidden="true">
         <div class="progress-fill" [style.width.%]="progressoPct()"></div>
       </div>
     </div>
+    @if (orcamentoExcedido()) {
+      <div class="budget-alert" role="alert">
+        O total previsto ultrapassou o orçamento definido.
+      </div>
+    }
+  </div>
+
+  <div class="toolbar">
+    <input
+      type="search"
+      class="search-input"
+      hlmInput
+      placeholder="Buscar itens..."
+      [value]="searchQuery()"
+      (input)="onSearchInput($event)"
+      aria-label="Buscar itens"
+    />
+    <div class="filter-bar" role="group" aria-label="Filtrar itens">
+      <button type="button" hlmBtn variant="outline" size="sm"
+        [class.active]="itemFilter() === 'all'" (click)="setFilter('all')">Todos</button>
+      <button type="button" hlmBtn variant="outline" size="sm"
+        [class.active]="itemFilter() === 'pending'" (click)="setFilter('pending')">Pendentes</button>
+      <button type="button" hlmBtn variant="outline" size="sm"
+        [class.active]="itemFilter() === 'marked'" (click)="setFilter('marked')">Marcados</button>
+    </div>
+    <button type="button" class="btn btn-primary shop-mode-btn" (click)="enterShopMode()">
+      Modo compra
+    </button>
   </div>
 
   <div class="items-list">
@@ -33,52 +71,69 @@
           </button>
         </div>
       </div>
+    } @else if (filteredItems().length === 0) {
+      <div class="empty-state">
+        <p>Nenhum item encontrado para esta busca.</p>
+      </div>
     } @else {
-      @for (item of items(); track item.id) {
-        <div
-          class="item-card"
-          [class.marked]="item.itemMarcado"
-          role="button"
-          tabindex="0"
-          (click)="toggleItemMarcado(item)"
-          (keydown.enter)="toggleItemMarcado(item)"
-          (keydown.space)="$event.preventDefault(); toggleItemMarcado(item)"
-          [attr.aria-pressed]="item.itemMarcado"
-          [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome"
-        >
-          <div class="item-content">
-            <span class="check-mark" [class.checked]="item.itemMarcado" aria-hidden="true"></span>
-            <div class="item-info">
-              <h3 class="item-name">{{ item.nome }}</h3>
-              @if (item.marca) {
-                <p class="item-brand">{{ item.marca }}</p>
-              }
-              <div class="item-details">
-                <span class="detail">Qtd: {{ item.quantidade }}</span>
-                <span class="detail">Preço: {{ item.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
-                <span class="detail total">Total: {{ (item.valor * item.quantidade) | currency:'BRL':'symbol':'1.2-2' }}</span>
+      @for (group of groupedItems(); track group[0]) {
+        <div class="category-group">
+          <h3 class="category-title">{{ group[0] }}</h3>
+          <div
+            class="category-items"
+            cdkDropList
+            [cdkDropListData]="group[1]"
+            (cdkDropListDropped)="onDrop($event, group[0])"
+          >
+            @for (item of group[1]; track item.id) {
+              <div
+                class="item-card"
+                [class.marked]="item.itemMarcado"
+                cdkDrag
+                role="button"
+                tabindex="0"
+                (click)="toggleItemMarcado(item)"
+                (keydown.enter)="toggleItemMarcado(item)"
+                (keydown.space)="$event.preventDefault(); toggleItemMarcado(item)"
+                [attr.aria-pressed]="item.itemMarcado"
+                [attr.aria-label]="(item.itemMarcado ? 'Desmarcar' : 'Marcar') + ' ' + item.nome"
+              >
+                <button type="button" class="drag-handle" cdkDragHandle aria-label="Arrastar para reordenar" (click)="$event.stopPropagation()">⠿</button>
+                <div class="item-content">
+                  <span class="check-mark" [class.checked]="item.itemMarcado" aria-hidden="true"></span>
+                  <div class="item-info">
+                    <h3 class="item-name">{{ item.nome }}</h3>
+                    @if (item.marca) {
+                      <p class="item-brand">{{ item.marca }}</p>
+                    }
+                    <div class="item-details">
+                      <span class="detail">Qtd: {{ item.quantidade }}</span>
+                      <span class="detail">Preço: {{ item.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
+                      <span class="detail total">Total: {{ (item.valor * item.quantidade) | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    </div>
+                  </div>
+                  <div class="item-actions" role="toolbar" [attr.aria-label]="'Ações para ' + item.nome">
+                    <button
+                      class="btn btn-icon"
+                      [routerLink]="['/shopping', shoppingId(), 'items', item.id, 'edit']"
+                      (click)="$event.stopPropagation()"
+                      aria-label="Editar item"
+                      title="Editar item"
+                    >
+                      <app-icon name="edit" />
+                    </button>
+                    <button
+                      class="btn btn-icon btn-danger"
+                      (click)="showDeleteConfirm(item.id!, $event)"
+                      aria-label="Excluir item"
+                      title="Excluir item"
+                    >
+                      <app-icon name="trash" />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <div class="item-actions" role="toolbar" [attr.aria-label]="'Ações para ' + item.nome">
-              <button
-                class="btn btn-icon"
-                [routerLink]="['/shopping', shoppingId(), 'items', item.id, 'edit']"
-                (click)="$event.stopPropagation()"
-                aria-label="Editar item"
-                title="Editar item"
-              >
-                <app-icon name="edit" />
-              </button>
-              <button
-                class="btn btn-icon btn-danger"
-                (click)="showDeleteConfirm(item.id!, $event)"
-                aria-label="Excluir item"
-                title="Excluir item"
-              >
-                <app-icon name="trash" />
-              </button>
-            </div>
+            }
           </div>
         </div>
       }

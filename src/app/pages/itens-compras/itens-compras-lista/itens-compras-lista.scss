@@ -4,6 +4,100 @@
   margin: 0 auto;
 }
 
+.over-budget {
+  color: var(--error) !important;
+}
+
+.budget-alert {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: 8px;
+  color: var(--error-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+
+  button.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.shop-mode-btn {
+  align-self: flex-start;
+}
+
+.category-group {
+  margin-bottom: 16px;
+}
+
+.category-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  padding-left: 4px;
+}
+
+.category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--text-placeholder);
+  font-size: 18px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  user-select: none;
+  background: none;
+  border: none;
+  font-family: inherit;
+  line-height: 1;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.cdk-drag-preview {
+  box-shadow: var(--shadow-lg);
+  border-radius: 10px;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.item-card {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .items-summary { margin-bottom: 20px; }
 
 .summary-card {
@@ -102,8 +196,10 @@
   display: flex;
   align-items: center;
   flex-direction: row;
-  padding: 14px 16px;
+  padding: 14px 16px 14px 0;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .check-mark {

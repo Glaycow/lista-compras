@@ -1,0 +1,24 @@
+{
+  "name": "ListaCompras",
+  "short_name": "Lista",
+  "description": "Gerenciador de listas de compras offline",
+  "theme_color": "#059669",
+  "background_color": "#f5f5f5",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

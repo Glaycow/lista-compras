@@ -1,6 +1,7 @@
-import {ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection} from '@angular/core';
+import {ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection} from '@angular/core';
 import {provideRouter, withViewTransitions} from '@angular/router';
 import {provideSignalFormsConfig} from '@angular/forms/signals';
+import {provideServiceWorker} from '@angular/service-worker';
 import {provideSpartanHlm} from '@spartan-ng/helm/utils';
 import {routes} from './app.routes';
 
@@ -33,6 +34,10 @@ export const appConfig: ApplicationConfig = {
         'ng-pristine': (f) => !f.state().dirty(),
         'ng-pending': (f) => f.state().pending(),
       },
+    }),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
     }),
   ],
 };

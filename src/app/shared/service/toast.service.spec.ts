@@ -161,4 +161,15 @@ describe('ToastService', () => {
     vi.advanceTimersByTime(TOAST_EXIT_DURATION);
     expect(service.data()).toBeNull();
   });
+
+  it('should show toast with action and execute callback', () => {
+    const callback = vi.fn();
+    service.showWithAction('Desfazer?', {label: 'Desfazer', callback}, 'info');
+    expect(service.data()?.action?.label).toBe('Desfazer');
+
+    service.executeAction();
+    expect(callback).toHaveBeenCalled();
+    vi.advanceTimersByTime(TOAST_EXIT_DURATION);
+    expect(service.data()).toBeNull();
+  });
 });

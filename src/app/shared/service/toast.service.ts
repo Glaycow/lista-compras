@@ -2,9 +2,15 @@ import {Injectable, signal} from '@angular/core';
 
 export type ToastType = 'success' | 'error' | 'info';
 
+export interface ToastAction {
+  label: string;
+  callback: () => void;
+}
+
 export interface ToastData {
   message: string;
   type: ToastType;
+  action?: ToastAction;
 }
 
 export const TOAST_EXIT_DURATION = 200;
@@ -28,10 +34,29 @@ export class ToastService {
     this.#autoDismissId = setTimeout(() => this.clear(), duration);
   }
 
+  showWithAction(
+    message: string,
+    action: ToastAction,
+    type: ToastType = 'info',
+    duration = 5000,
+  ): void {
+    this.#cancelPending();
+    this.#isExiting.set(false);
+    this.#data.set({message, type, action});
+    this.#autoDismissId = setTimeout(() => this.clear(), duration);
+  }
+
+  executeAction(): void {
+    const action = this.#data()?.action;
+    if (action) {
+      action.callback();
+    }
+    this.clear();
+  }
+
   clear(): void {
     this.#cancelAutoDismiss();
 
-    // Cancel any pending exit to avoid duplicate timeouts
     if (this.#exitTimeoutId !== null) {
       clearTimeout(this.#exitTimeoutId);
       this.#exitTimeoutId = null;
@@ -42,7 +67,6 @@ export class ToastService {
       return;
     }
 
-    // Start exit animation
     this.#isExiting.set(true);
     this.#exitTimeoutId = setTimeout(() => {
       this.#data.set(null);

@@ -7,11 +7,25 @@
       </div>
     }
     <form [formRoot]="form" class="form-content">
+      @if (!isEditMode() && frequentItems().length > 0) {
+        <div class="frequent-section">
+          <span class="section-label">Itens frequentes</span>
+          <div class="frequent-chips">
+            @for (item of frequentItems(); track item.nome + (item.marca ?? '')) {
+              <button type="button" class="frequent-chip" (click)="applyFrequentItem(item)">
+                {{ item.nome }}
+                @if (item.marca) { <span class="chip-brand">({{ item.marca }})</span> }
+              </button>
+            }
+          </div>
+        </div>
+      }
+
       <div class="form-field">
         <label class="label" for="nome">Nome do item</label>
         <input
           id="nome"
-          class="input"
+          hlmInput
           [formField]="form.nome"
           placeholder="Nome do item"
         />
@@ -24,11 +38,39 @@
         <label class="label" for="marca">Marca</label>
         <input
           id="marca"
-          class="input"
+          hlmInput
           [formField]="form.marca"
           placeholder="Marca (opcional)"
         />
       </div>
+
+      <div class="form-field">
+        <label class="label" for="categoria">Categoria</label>
+        <select id="categoria" class="input" [formField]="form.categoria">
+          @for (cat of categories; track cat) {
+            <option [value]="cat">{{ cat }}</option>
+          }
+        </select>
+      </div>
+
+      @if (lastPrice()) {
+        <div class="price-hint">
+          <span>Último preço: {{ lastPrice()!.valor | currency:'BRL':'symbol':'1.2-2' }}
+            ({{ lastPrice()!.registeredAt | date:'dd/MM/yyyy' }})</span>
+          <button type="button" hlmBtn variant="outline" size="sm" (click)="applyLastPrice()">Usar</button>
+        </div>
+      }
+
+      @if (priceHistory().length > 1) {
+        <details class="price-history">
+          <summary>Histórico de preços ({{ priceHistory().length }})</summary>
+          <ul>
+            @for (entry of priceHistory(); track entry.id) {
+              <li>{{ entry.valor | currency:'BRL':'symbol':'1.2-2' }} — {{ entry.registeredAt | date:'dd/MM/yyyy' }}</li>
+            }
+          </ul>
+        </details>
+      }
 
       <div class="form-row">
         <div class="form-field">
@@ -46,6 +88,7 @@
             <input
               id="quantidade"
               class="input qty-input"
+              hlmInput
               type="number"
               inputmode="numeric"
               [formField]="form.quantidade"
@@ -92,10 +135,10 @@
       }
 
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="goBack()">
+        <button type="button" hlmBtn variant="outline" (click)="goBack()">
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="form().invalid() || form().submitting()">
+        <button type="submit" hlmBtn [disabled]="form().invalid() || form().submitting()">
           {{ form().submitting() ? 'Salvando...' : 'Salvar' }}
         </button>
       </div>

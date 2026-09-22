@@ -1,6 +1,8 @@
 import {Component, inject, OnInit, signal} from '@angular/core';
 import {FormField, FormRoot, form, required, minLength} from '@angular/forms/signals';
 import {ActivatedRoute, Router} from '@angular/router';
+import {HlmButton} from '@spartan-ng/helm/button';
+import {HlmInput} from '@spartan-ng/helm/input';
 import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingService} from '../../../shared/service/shopping-service';
 import {IconComponent} from '../../../shared/components/icon/icon';
@@ -11,6 +13,7 @@ import {parseRouteId} from '../../../shared/util/route-id';
 interface ShoppingFormModel {
   nome: string;
   data: string;
+  orcamento: number | null;
 }
 
 @Component({
@@ -19,6 +22,8 @@ interface ShoppingFormModel {
     FormField,
     FormRoot,
     IconComponent,
+    HlmButton,
+    HlmInput,
   ],
   templateUrl: './compras-form.html',
   styleUrl: './compras-form.scss',
@@ -36,6 +41,7 @@ export default class ComprasForm implements OnInit {
   protected readonly model = signal<ShoppingFormModel>({
     nome: '',
     data: toLocalDateInput(new Date()),
+    orcamento: null,
   });
 
   protected readonly submitError = signal<string | null>(null);
@@ -77,6 +83,7 @@ export default class ComprasForm implements OnInit {
         id: this.isEditMode() ? this.currentShoppingId()! : undefined,
         nome: m.nome,
         data: parseLocalDate(m.data),
+        orcamento: m.orcamento && m.orcamento > 0 ? m.orcamento : undefined,
       };
 
       if (this.isEditMode()) {
@@ -111,6 +118,7 @@ export default class ComprasForm implements OnInit {
         this.model.set({
           nome: shopping.nome,
           data: toLocalDateInput(shopping.data),
+          orcamento: shopping.orcamento ?? null,
         });
       } else {
         this.goBack();

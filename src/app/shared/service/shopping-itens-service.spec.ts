@@ -2,13 +2,21 @@ import {TestBed} from '@angular/core/testing';
 import {ShoppingItensService} from './shopping-itens-service';
 import {ShoppingItem} from '../model/ShoppingItem';
 
-/** Helper: delete the IndexedDB 'shopping' database to ensure a clean state. */
 async function deleteShoppingDb(): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const req = indexedDB.deleteDatabase('shopping');
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
-    req.onblocked = () => resolve(); // ignore blocked
+    req.onblocked = () => resolve();
+  });
+}
+
+async function collectItems(service: ShoppingItensService, shoppingId: number): Promise<ShoppingItem[]> {
+  return new Promise((resolve) => {
+    const sub = service.watchItems(shoppingId).subscribe((items) => {
+      resolve(items);
+      sub.unsubscribe();
+    });
   });
 }
 
@@ -21,30 +29,9 @@ describe('ShoppingItensService', () => {
     service = TestBed.inject(ShoppingItensService);
   });
 
-  // ────────────────────────────
-  //  Initial state
-  // ────────────────────────────
-
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
-
-  it('should start with an empty shoppingItens signal', () => {
-    expect(service.shoppingItens()).toEqual([]);
-  });
-
-  // ────────────────────────────
-  //  getShoppingById
-  // ────────────────────────────
-
-  it('should return undefined for non-existent shopping', async () => {
-    const result = await service.getShoppingById(999);
-    expect(result).toBeUndefined();
-  });
-
-  // ────────────────────────────
-  //  create
-  // ────────────────────────────
 
   it('should create an item and return its id', async () => {
     const item: ShoppingItem = {
@@ -75,27 +62,19 @@ describe('ShoppingItensService', () => {
     expect(found!.valor).toBe(8.0);
   });
 
-  // ────────────────────────────
-  //  getById
-  // ────────────────────────────
-
   it('should return undefined for non-existent item id', async () => {
     const result = await service.getById(999);
     expect(result).toBeUndefined();
   });
 
-  // ────────────────────────────
-  //  getShoppingItensByShoppingId
-  // ────────────────────────────
-
-  it('should load items for a shopping and update the signal', async () => {
+  it('should load items for a shopping via watchItems', async () => {
     const item1: ShoppingItem = { shoppingId: 1, nome: 'Item A', quantidade: 1, valor: 10, itemMarcado: false };
     const item2: ShoppingItem = { shoppingId: 1, nome: 'Item B', quantidade: 2, valor: 20, itemMarcado: true };
     await service.create(item1);
     await service.create(item2);
 
-    await service.getShoppingItensByShoppingId(1);
-    expect(service.shoppingItens()).toHaveLength(2);
+    const items = await collectItems(service, 1);
+    expect(items).toHaveLength(2);
   });
 
   it('should sort items by marcado status and name', async () => {
@@ -104,8 +83,7 @@ describe('ShoppingItensService', () => {
     await service.create(itemA);
     await service.create(itemB);
 
-    await service.getShoppingItensByShoppingId(1);
-    const items = service.shoppingItens();
+    const items = await service.getShoppingItensByShoppingId(1);
     expect(items[0].itemMarcado).toBe(false);
     expect(items[1].itemMarcado).toBe(true);
   });
@@ -113,8 +91,7 @@ describe('ShoppingItensService', () => {
   it('should keep marked items after unmarked ones when the first compared item is marked', async () => {
     await service.create({shoppingId: 2, nome: 'Zebra', quantidade: 1, valor: 1, itemMarcado: true});
     await service.create({shoppingId: 2, nome: 'Abacaxi', quantidade: 1, valor: 1, itemMarcado: false});
-    await service.getShoppingItensByShoppingId(2);
-    const items = service.shoppingItens();
+    const items = await service.getShoppingItensByShoppingId(2);
     expect(items[0].nome).toBe('Abacaxi');
     expect(items[1].nome).toBe('Zebra');
   });
@@ -122,9 +99,9 @@ describe('ShoppingItensService', () => {
   it('should treat missing marca as empty when sorting', async () => {
     await service.create({shoppingId: 4, nome: 'Leite', quantidade: 1, valor: 1, itemMarcado: false, marca: 'B'});
     await service.create({shoppingId: 4, nome: 'Leite', quantidade: 1, valor: 1, itemMarcado: false});
-    await service.getShoppingItensByShoppingId(4);
-    expect(service.shoppingItens()[0].marca).toBeUndefined();
-    expect(service.shoppingItens()[1].marca).toBe('B');
+    const items = await service.getShoppingItensByShoppingId(4);
+    expect(items[0].marca).toBeUndefined();
+    expect(items[1].marca).toBe('B');
   });
 
   it('should sort unmarked items by name then marca', async () => {
@@ -132,8 +109,7 @@ describe('ShoppingItensService', () => {
     await service.create({shoppingId: 1, nome: 'Leite', marca: 'A', quantidade: 1, valor: 1, itemMarcado: false});
     await service.create({shoppingId: 1, nome: 'Arroz', marca: 'Z', quantidade: 1, valor: 1, itemMarcado: false});
 
-    await service.getShoppingItensByShoppingId(1);
-    const items = service.shoppingItens();
+    const items = await service.getShoppingItensByShoppingId(1);
     expect(items.map((item) => `${item.nome}-${item.marca}`)).toEqual([
       'Arroz-Z',
       'Leite-A',
@@ -141,14 +117,10 @@ describe('ShoppingItensService', () => {
     ]);
   });
 
-  it('should set empty array for non-existent shopping', async () => {
-    await service.getShoppingItensByShoppingId(999);
-    expect(service.shoppingItens()).toEqual([]);
+  it('should return empty array for non-existent shopping', async () => {
+    const items = await service.getShoppingItensByShoppingId(999);
+    expect(items).toEqual([]);
   });
-
-  // ────────────────────────────
-  //  update
-  // ────────────────────────────
 
   it('should update an existing item', async () => {
     const item: ShoppingItem = { shoppingId: 1, nome: 'Original', quantidade: 1, valor: 10, itemMarcado: false };
@@ -160,10 +132,6 @@ describe('ShoppingItensService', () => {
     expect(found!.quantidade).toBe(3);
     expect(found!.valor).toBe(15);
   });
-
-  // ────────────────────────────
-  //  updateItemMarcado (toggle)
-  // ────────────────────────────
 
   it('should toggle itemMarcado from false to true', async () => {
     const item: ShoppingItem = { shoppingId: 1, nome: 'Item', quantidade: 1, valor: 10, itemMarcado: false };
@@ -181,10 +149,6 @@ describe('ShoppingItensService', () => {
     expect(found!.itemMarcado).toBe(false);
   });
 
-  // ────────────────────────────
-  //  remove
-  // ────────────────────────────
-
   it('should remove an item', async () => {
     const item: ShoppingItem = { shoppingId: 1, nome: 'Remover', quantidade: 1, valor: 10, itemMarcado: false };
     const id = await service.create(item);
@@ -194,9 +158,44 @@ describe('ShoppingItensService', () => {
     expect(await service.getById(id)).toBeUndefined();
   });
 
-  // ────────────────────────────
-  //  Full flow: create, load, update, remove
-  // ────────────────────────────
+  it('should restore a removed item', async () => {
+    const item: ShoppingItem = { shoppingId: 1, nome: 'Restaurar', quantidade: 1, valor: 10, itemMarcado: false };
+    const id = await service.create(item);
+    const removed = await service.remove(id);
+    expect(removed).toBeTruthy();
+
+    const restoredId = await service.restore(removed!);
+    const found = await service.getById(restoredId);
+    expect(found?.nome).toBe('Restaurar');
+  });
+
+  it('should record and retrieve price history', async () => {
+    await service.create({shoppingId: 1, nome: 'Leite', quantidade: 1, valor: 5, itemMarcado: false});
+    const last = await service.getLastPrice('Leite');
+    expect(last?.valor).toBe(5);
+
+    const history = await service.getPriceHistory('Leite');
+    expect(history.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('should return frequent items', async () => {
+    await service.create({shoppingId: 1, nome: 'Arroz', quantidade: 1, valor: 10, itemMarcado: false});
+    await service.create({shoppingId: 1, nome: 'Arroz', quantidade: 1, valor: 10, itemMarcado: false});
+    await service.create({shoppingId: 1, nome: 'Feijão', quantidade: 1, valor: 8, itemMarcado: false});
+
+    const frequent = await service.getFrequentItems();
+    expect(frequent[0].nome).toBe('Arroz');
+    expect(frequent[0].count).toBe(2);
+  });
+
+  it('should reorder items', async () => {
+    const id1 = await service.create({shoppingId: 1, nome: 'A', quantidade: 1, valor: 1, itemMarcado: false});
+    const id2 = await service.create({shoppingId: 1, nome: 'B', quantidade: 1, valor: 1, itemMarcado: false});
+    await service.reorderItems(1, [id2, id1]);
+    const items = await service.getShoppingItensByShoppingId(1);
+    expect(items[0].id).toBe(id2);
+    expect(items[1].id).toBe(id1);
+  });
 
   it('should handle a complete CRUD flow', async () => {
     const item1: ShoppingItem = { shoppingId: 1, nome: 'Arroz', quantidade: 5, valor: 28.9, itemMarcado: false };
@@ -206,8 +205,8 @@ describe('ShoppingItensService', () => {
     const item2: ShoppingItem = { shoppingId: 1, nome: 'Feijão', quantidade: 2, valor: 15.5, itemMarcado: true };
     await service.create(item2);
 
-    await service.getShoppingItensByShoppingId(1);
-    expect(service.shoppingItens()).toHaveLength(2);
+    const items = await collectItems(service, 1);
+    expect(items).toHaveLength(2);
 
     await service.update({ id: id1, shoppingId: 1, nome: 'Arroz Integral', quantidade: 5, valor: 32.9, itemMarcado: false });
     await service.updateItemMarcado({ id: id1, shoppingId: 1, nome: 'Arroz Integral', quantidade: 5, valor: 32.9, itemMarcado: false });

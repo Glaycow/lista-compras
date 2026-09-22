@@ -113,8 +113,7 @@ describe('ItensComprasLista', () => {
       shoppingId: 1, nome: 'Item Teste', quantidade: 2, valor: 15.5, itemMarcado: false,
     });
     await component['ngOnInit']();
-    fixture.detectChanges();
-    expect(component['items']()).toHaveLength(1);
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(1));
     expect(component['items']()[0].nome).toBe('Item Teste');
   });
 
@@ -186,7 +185,7 @@ describe('ItensComprasLista', () => {
     await shoppingItensService.create({ shoppingId: 1, nome: 'Item 1', quantidade: 2, valor: 10, itemMarcado: false });
     await shoppingItensService.create({ shoppingId: 1, nome: 'Item 2', quantidade: 3, valor: 5, itemMarcado: true });
     await component['ngOnInit']();
-    fixture.detectChanges();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(2));
     expect(component['valorTotal']()).toBe(35);
   });
 
@@ -194,7 +193,7 @@ describe('ItensComprasLista', () => {
     await shoppingItensService.create({ shoppingId: 1, nome: 'Item 1', quantidade: 2, valor: 10, itemMarcado: false });
     await shoppingItensService.create({ shoppingId: 1, nome: 'Item 2', quantidade: 3, valor: 5, itemMarcado: true });
     await component['ngOnInit']();
-    fixture.detectChanges();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(2));
     expect(component['valorPego']()).toBe(15);
   });
 
@@ -215,6 +214,7 @@ describe('ItensComprasLista', () => {
       shoppingId: 1, nome: 'Arroz', quantidade: 5, valor: 28.9, itemMarcado: false,
     });
     await component['ngOnInit']();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(1));
     fixture.detectChanges();
     const cards = fixture.nativeElement.querySelectorAll('.item-card');
     expect(cards.length).toBeGreaterThanOrEqual(1);
@@ -231,6 +231,7 @@ describe('ItensComprasLista', () => {
     await shoppingItensService.create({shoppingId: 1, nome: 'A', quantidade: 1, valor: 1, itemMarcado: true});
     await shoppingItensService.create({shoppingId: 1, nome: 'B', quantidade: 1, valor: 1, itemMarcado: false});
     await component['ngOnInit']();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(2));
     expect(component['itensMarcados']()).toBe(1);
     expect(component['progressoPct']()).toBe(50);
   });
@@ -283,6 +284,77 @@ describe('ItensComprasLista', () => {
     const nav = (component as unknown as { navBarButtonService: { buttons: () => { action: () => void }[] } }).navBarButtonService;
     nav.buttons()[0].action();
     expect(navigateSpy).toHaveBeenCalledWith(['/shopping/1/items/new']);
+  });
+
+  it('should filter items by search query', async () => {
+    await shoppingItensService.create({shoppingId: 1, nome: 'Arroz', quantidade: 1, valor: 1, itemMarcado: false});
+    await shoppingItensService.create({shoppingId: 1, nome: 'Feijão', quantidade: 1, valor: 1, itemMarcado: false});
+    await component['ngOnInit']();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(2));
+    component['searchQuery'].set('arroz');
+    expect(component['filteredItems']()).toHaveLength(1);
+  });
+
+  it('should enter shop mode', async () => {
+    await component['ngOnInit']();
+    const router = (component as unknown as { router: { navigate: (path: unknown[]) => Promise<boolean> } }).router;
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    component['enterShopMode']();
+    expect(navigateSpy).toHaveBeenCalledWith(['/shopping', 1, 'shop']);
+  });
+
+  it('should filter pending and marked items', async () => {
+    await shoppingItensService.create({shoppingId: 1, nome: 'A', quantidade: 1, valor: 1, itemMarcado: true});
+    await shoppingItensService.create({shoppingId: 1, nome: 'B', quantidade: 1, valor: 1, itemMarcado: false});
+    await component['ngOnInit']();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(2));
+    component['setFilter']('pending');
+    expect(component['filteredItems']()).toHaveLength(1);
+    component['setFilter']('marked');
+    expect(component['filteredItems']()).toHaveLength(1);
+  });
+
+  it('should detect budget exceeded', async () => {
+    const db = new DbConfig();
+    await db.shopping.put({id: 1, nome: 'Lista Teste', data: new Date(), orcamento: 10});
+    await component['ngOnInit']();
+    await shoppingItensService.create({shoppingId: 1, nome: 'Caro', quantidade: 1, valor: 20, itemMarcado: false});
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(1));
+    expect(component['orcamentoExcedido']()).toBe(true);
+  });
+
+  it('should reorder items on drop', async () => {
+    await shoppingItensService.create({shoppingId: 1, nome: 'A', quantidade: 1, valor: 1, itemMarcado: false, categoria: 'Outros'});
+    const id2 = await shoppingItensService.create({shoppingId: 1, nome: 'B', quantidade: 1, valor: 1, itemMarcado: false, categoria: 'Outros'});
+    await component['ngOnInit']();
+    await vi.waitFor(() => expect(component['items']()).toHaveLength(2));
+    const items = component['items']();
+    await component['onDrop']({
+      previousIndex: 0,
+      currentIndex: 1,
+      container: {data: items},
+    } as never, 'Outros');
+    await vi.waitFor(() => expect(component['items']()[0].id).toBe(id2));
+  });
+
+  it('should toast when reorder fails', async () => {
+    await component['ngOnInit']();
+    const toast = (component as unknown as { toastService: { show: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'show');
+    vi.spyOn(shoppingItensService, 'reorderItems').mockRejectedValue(new Error('fail'));
+    await component['onDrop']({previousIndex: 0, currentIndex: 0, container: {data: []}} as never, 'Outros');
+    expect(showSpy).toHaveBeenCalledWith('Não foi possível reordenar os itens.', 'error');
+  });
+
+  it('should undo item delete via toast', async () => {
+    const itemId = await shoppingItensService.create({shoppingId: 1, nome: 'Undo', quantidade: 1, valor: 1, itemMarcado: false});
+    const toast = (component as unknown as { toastService: { showWithAction: (...args: unknown[]) => void } }).toastService;
+    const showSpy = vi.spyOn(toast, 'showWithAction');
+    component['pendingDeleteItemId'].set(itemId);
+    await component['onDeleteConfirmed']();
+    const callback = showSpy.mock.calls[0][1] as {callback: () => void};
+    callback.callback();
+    expect(await shoppingItensService.getById(itemId)).toBeTruthy();
   });
 });
 

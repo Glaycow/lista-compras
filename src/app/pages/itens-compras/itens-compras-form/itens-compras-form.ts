@@ -1,12 +1,16 @@
-import {CurrencyPipe} from '@angular/common';
-import {computed, Component, inject, OnDestroy, OnInit, signal} from '@angular/core';
+import {CurrencyPipe, DatePipe} from '@angular/common';
+import {computed, Component, effect, inject, OnDestroy, OnInit, signal} from '@angular/core';
 import {FormField, FormRoot, form, min, minLength, required} from '@angular/forms/signals';
 import {ActivatedRoute, Router} from '@angular/router';
+import {HlmButton} from '@spartan-ng/helm/button';
+import {HlmInput} from '@spartan-ng/helm/input';
 import {NavBarButtonService} from '../../../core/service/nav-bar-button-service';
 import {BrCurrencyInput} from '../../../shared/components/br-currency-input/br-currency-input';
 import {IconComponent} from '../../../shared/components/icon/icon';
+import {ITEM_CATEGORIES, ItemCategory} from '../../../shared/model/item-categories';
+import {PriceHistory} from '../../../shared/model/PriceHistory';
 import {ShoppingItem} from '../../../shared/model/ShoppingItem';
-import {ShoppingItensService} from '../../../shared/service/shopping-itens-service';
+import {FrequentItem, ShoppingItensService} from '../../../shared/service/shopping-itens-service';
 import {ToastService} from '../../../shared/service/toast.service';
 import {parseRouteId} from '../../../shared/util/route-id';
 
@@ -16,6 +20,7 @@ interface ItemFormModel {
   quantidade: number;
   valor: number;
   itemMarcado: boolean;
+  categoria: ItemCategory;
 }
 
 @Component({
@@ -25,7 +30,10 @@ interface ItemFormModel {
     FormRoot,
     BrCurrencyInput,
     CurrencyPipe,
+    DatePipe,
     IconComponent,
+    HlmButton,
+    HlmInput,
   ],
   templateUrl: './itens-compras-form.html',
   styleUrl: './itens-compras-form.scss',
@@ -37,12 +45,18 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
   private readonly navBarButtonService = inject(NavBarButtonService);
   private readonly toastService = inject(ToastService);
 
+  protected readonly categories = ITEM_CATEGORIES;
+  protected readonly frequentItems = signal<FrequentItem[]>([]);
+  protected readonly priceHistory = signal<PriceHistory[]>([]);
+  protected readonly lastPrice = signal<PriceHistory | undefined>(undefined);
+
   protected readonly model = signal<ItemFormModel>({
     nome: '',
     marca: '',
     quantidade: 1,
     valor: 0,
     itemMarcado: false,
+    categoria: 'Outros',
   });
 
   protected readonly submitError = signal<string | null>(null);
@@ -74,6 +88,16 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
   readonly currentItemId = signal<number | null>(null);
   readonly isLoading = signal(false);
 
+  constructor() {
+    effect(() => {
+      const nome = this.model().nome;
+      const marca = this.model().marca;
+      if (nome.length >= 2) {
+        void this.loadPriceInfo(nome, marca || undefined);
+      }
+    });
+  }
+
   async ngOnInit(): Promise<void> {
     const shoppingId = parseRouteId(this.route.snapshot.paramMap.get('shoppingId'));
     const itemId = parseRouteId(this.route.snapshot.paramMap.get('itemId'));
@@ -83,6 +107,7 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
     }
 
     this.shoppingId.set(shoppingId);
+    this.frequentItems.set(await this.shoppingItensService.getFrequentItems());
 
     if (itemId) {
       this.isEditMode.set(true);
@@ -101,6 +126,23 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
     void this.router.navigate(['/shopping', this.shoppingId(), 'items']);
   }
 
+  protected applyFrequentItem(item: FrequentItem): void {
+    this.model.update((m) => ({
+      ...m,
+      nome: item.nome,
+      marca: item.marca ?? '',
+      valor: item.valor,
+      categoria: (item.categoria as ItemCategory) ?? 'Outros',
+    }));
+  }
+
+  protected applyLastPrice(): void {
+    const last = this.lastPrice();
+    if (last) {
+      this.model.update((m) => ({...m, valor: last.valor}));
+    }
+  }
+
   protected async save(): Promise<void> {
     this.submitError.set(null);
 
@@ -113,6 +155,7 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
         quantidade: m.quantidade,
         valor: m.valor,
         itemMarcado: m.itemMarcado,
+        categoria: m.categoria,
       };
 
       if (!this.isEditMode()) {
@@ -147,6 +190,15 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
     }));
   }
 
+  private async loadPriceInfo(nome: string, marca?: string): Promise<void> {
+    const [last, history] = await Promise.all([
+      this.shoppingItensService.getLastPrice(nome, marca),
+      this.shoppingItensService.getPriceHistory(nome, marca),
+    ]);
+    this.lastPrice.set(last);
+    this.priceHistory.set(history);
+  }
+
   private async loadItem(itemId: number): Promise<void> {
     this.isLoading.set(true);
     try {
@@ -158,6 +210,7 @@ export default class ItensComprasForm implements OnInit, OnDestroy {
           quantidade: item.quantidade,
           valor: item.valor,
           itemMarcado: item.itemMarcado,
+          categoria: item.categoria ?? 'Outros',
         });
       } else {
         this.goBack();

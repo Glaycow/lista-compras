@@ -1,0 +1,66 @@
+<div class="modo-container" role="main" aria-label="Modo compra">
+  <div class="modo-header">
+    <div class="progress-info">
+      <span class="progress-text">{{ marcados().length }}/{{ items().length }} itens</span>
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" [style.width.%]="progressoPct()"></div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="exitMode()">Sair do modo</button>
+  </div>
+
+  @if (pendentes().length === 0 && items().length > 0) {
+    <div class="done-banner" role="status">
+      <p>Compra concluída!</p>
+    </div>
+  }
+
+  <section class="modo-section" aria-label="Itens pendentes">
+    <h2 class="section-title">Pendentes ({{ pendentes().length }})</h2>
+    <div class="modo-list">
+      @for (item of pendentes(); track item.id) {
+        <button
+          type="button"
+          class="modo-card"
+          (click)="toggleItem(item)"
+          [attr.aria-label]="'Marcar ' + item.nome"
+        >
+          <span class="modo-check" aria-hidden="true"></span>
+          <div class="modo-info">
+            <span class="modo-name">{{ item.nome }}</span>
+            @if (item.marca) {
+              <span class="modo-brand">{{ item.marca }}</span>
+            }
+            <span class="modo-detail">Qtd: {{ item.quantidade }} · {{ (item.valor * item.quantidade) | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
+        </button>
+      } @empty {
+        <p class="empty-hint">Nenhum item pendente</p>
+      }
+    </div>
+  </section>
+
+  @if (marcados().length > 0) {
+    <section class="modo-section marked-section" aria-label="Itens marcados">
+      <h2 class="section-title">No carrinho ({{ marcados().length }})</h2>
+      <div class="modo-list">
+        @for (item of marcados(); track item.id) {
+          <button
+            type="button"
+            class="modo-card marked"
+            (click)="toggleItem(item)"
+            [attr.aria-label]="'Desmarcar ' + item.nome"
+          >
+            <span class="modo-check checked" aria-hidden="true"></span>
+            <div class="modo-info">
+              <span class="modo-name">{{ item.nome }}</span>
+              @if (item.marca) {
+                <span class="modo-brand">{{ item.marca }}</span>
+              }
+            </div>
+          </button>
+        }
+      </div>
+    </section>
+  }
+</div>
