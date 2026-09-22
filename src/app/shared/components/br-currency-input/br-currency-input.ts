@@ -1,5 +1,5 @@
-import {Component, forwardRef, input, signal} from '@angular/core';
-import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
+import {Component, effect, input, model, signal} from '@angular/core';
+import {FormValueControl} from '@angular/forms/signals';
 
 /**
  * Brazilian currency input component (R$)
@@ -11,7 +11,12 @@ import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
   selector: 'app-br-currency-input',
   imports: [],
   template: `
-    <div class="currency-wrapper" [class.focused]="isFocused()" [class.disabled]="isDisabled" [class.has-value]="displayValue() !== ''">
+    <div
+      class="currency-wrapper"
+      [class.focused]="isFocused()"
+      [class.disabled]="disabled()"
+      [class.has-value]="displayValue() !== ''"
+    >
       <span class="currency-prefix">R$</span>
       <input
         class="currency-input"
@@ -25,53 +30,34 @@ import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms';
         (keydown)="onKeydown($event)"
         [attr.id]="inputId() || null"
         [placeholder]="placeholder()"
-        [disabled]="isDisabled"
+        [disabled]="disabled()"
       />
     </div>
   `,
   styleUrl: './br-currency-input.scss',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => BrCurrencyInput),
-      multi: true,
-    },
-  ],
 })
-export class BrCurrencyInput implements ControlValueAccessor {
+export class BrCurrencyInput implements FormValueControl<number | null> {
   placeholder = input('0,00');
   inputId = input('');
+
+  readonly value = model<number | null>(null);
+  readonly touched = model(false);
+  readonly disabled = input(false);
 
   private centsValue = 0;
   protected displayValue = signal('');
   protected isFocused = signal(false);
-  protected isDisabled = false;
 
-  // These stubs are replaced by registerOnChange / registerOnTouched — required by ControlValueAccessor.
-  private onChange: (value: number) => void = () => {};
-  private onTouched: () => void = () => {};
-
-  // --- ControlValueAccessor ---
-
-  writeValue(value: number | null | undefined): void {
-    const num = value ?? 0;
-    this.centsValue = Math.round(num * 100);
-    this.updateDisplay();
+  constructor() {
+    effect(() => {
+      if (this.isFocused()) {
+        return;
+      }
+      const num = this.value();
+      this.centsValue = num == null ? 0 : Math.round(num * 100);
+      this.updateDisplay();
+    });
   }
-
-  registerOnChange(fn: (value: number) => void): void {
-    this.onChange = fn;
-  }
-
-  registerOnTouched(fn: () => void): void {
-    this.onTouched = fn;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    this.isDisabled = isDisabled;
-  }
-
-  // --- Event handlers ---
 
   protected onInput(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -81,7 +67,6 @@ export class BrCurrencyInput implements ControlValueAccessor {
     this.updateDisplay();
     this.emitChange();
 
-    // Restore cursor to end after value update
     requestAnimationFrame(() => {
       const len = this.displayValue().length;
       input.setSelectionRange(len, len);
@@ -90,25 +75,22 @@ export class BrCurrencyInput implements ControlValueAccessor {
 
   protected onFocus(): void {
     this.isFocused.set(true);
-    // When focusing, show the raw cents value for clean editing
     this.updateDisplay();
   }
 
   protected onBlur(): void {
     this.isFocused.set(false);
-    this.onTouched();
+    this.touched.set(true);
     this.updateDisplay();
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    // Allow control keys
     if (
       ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(event.key)
     ) {
       return;
     }
 
-    // Allow Ctrl/Cmd + shortcuts
     if (
       (event.ctrlKey || event.metaKey) &&
       ['a', 'c', 'v', 'x'].includes(event.key.toLowerCase())
@@ -116,20 +98,16 @@ export class BrCurrencyInput implements ControlValueAccessor {
       return;
     }
 
-    // Allow navigation
     if (
       ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)
     ) {
       return;
     }
 
-    // Only allow digits
     if (!/^\d$/.test(event.key)) {
       event.preventDefault();
     }
   }
-
-  // --- Internal helpers ---
 
   private updateDisplay(): void {
     if (this.centsValue === 0) {
@@ -139,15 +117,13 @@ export class BrCurrencyInput implements ControlValueAccessor {
 
     const reais = Math.floor(this.centsValue / 100);
     const centavos = this.centsValue % 100;
-
-    // Brazilian format: 1.234,56
     const formattedReais = reais.toLocaleString('pt-BR');
     this.displayValue.set(
-      `${formattedReais},${centavos.toString().padStart(2, '0')}`
+      `${formattedReais},${centavos.toString().padStart(2, '0')}`,
     );
   }
 
   private emitChange(): void {
-    this.onChange(this.centsValue / 100);
+    this.value.set(this.centsValue === 0 ? null : this.centsValue / 100);
   }
 }

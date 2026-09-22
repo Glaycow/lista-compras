@@ -35,14 +35,10 @@
 
       <div class="form-field">
         <label class="label" for="orcamento">Orçamento (opcional)</label>
-        <input
-          id="orcamento"
-          hlmInput
-          type="number"
-          inputmode="decimal"
-          step="0.01"
+        <app-br-currency-input
+          inputId="orcamento"
           [formField]="form.orcamento"
-          placeholder="Ex: 200.00"
+          placeholder="0,00"
         />
       </div>
 

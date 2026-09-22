@@ -5,6 +5,7 @@ import {HlmButton} from '@spartan-ng/helm/button';
 import {HlmInput} from '@spartan-ng/helm/input';
 import {Shopping} from '../../../shared/model/Shopping';
 import {ShoppingService} from '../../../shared/service/shopping-service';
+import {BrCurrencyInput} from '../../../shared/components/br-currency-input/br-currency-input';
 import {IconComponent} from '../../../shared/components/icon/icon';
 import {ToastService} from '../../../shared/service/toast.service';
 import {parseLocalDate, toLocalDateInput} from '../../../shared/util/local-date';
@@ -21,6 +22,7 @@ interface ShoppingFormModel {
   imports: [
     FormField,
     FormRoot,
+    BrCurrencyInput,
     IconComponent,
     HlmButton,
     HlmInput,

@@ -1,7 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {BrCurrencyInput} from './br-currency-input';
 
-// jsdom doesn't implement setSelectionRange — polyfill it
 beforeAll(() => {
   HTMLInputElement.prototype.setSelectionRange = vi.fn() as unknown as (
     start: number,
@@ -24,10 +23,6 @@ describe('BrCurrencyInput', () => {
     fixture.detectChanges();
   });
 
-  // ────────────────────────────
-  //  Initial state
-  // ────────────────────────────
-
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -35,46 +30,34 @@ describe('BrCurrencyInput', () => {
   it('should start with display value empty and not focused', () => {
     expect(component['displayValue']()).toBe('');
     expect(component['isFocused']()).toBe(false);
-    expect(component['isDisabled']).toBe(false);
+    expect(component.disabled()).toBe(false);
   });
 
-  // ────────────────────────────
-  //  writeValue (ControlValueAccessor)
-  // ────────────────────────────
-
-  it('should display a formatted value on writeValue', () => {
-    component.writeValue(12.34);
+  it('should display a formatted value when value model is set', () => {
+    component.value.set(12.34);
+    fixture.detectChanges();
     expect(component['displayValue']()).toBe('12,34');
   });
 
-  it('should display empty on writeValue(0)', () => {
-    component.writeValue(0);
+  it('should display empty when value is 0', () => {
+    component.value.set(0);
+    fixture.detectChanges();
     expect(component['displayValue']()).toBe('');
   });
 
-  it('should display empty on writeValue(null)', () => {
-    component.writeValue(null);
-    expect(component['displayValue']()).toBe('');
-  });
-
-  it('should display empty on writeValue(undefined)', () => {
-    component.writeValue(undefined);
+  it('should display empty when value is null', () => {
+    component.value.set(null);
+    fixture.detectChanges();
     expect(component['displayValue']()).toBe('');
   });
 
   it('should format large numbers with Brazilian locale', () => {
-    component.writeValue(1234.56);
+    component.value.set(1234.56);
+    fixture.detectChanges();
     expect(component['displayValue']()).toBe('1.234,56');
   });
 
-  // ────────────────────────────
-  //  registerOnChange / registerOnTouched
-  // ────────────────────────────
-
-  it('should call onChange when internal value changes', () => {
-    const onChange = vi.fn();
-    component.registerOnChange(onChange);
-
+  it('should update value model when internal value changes', () => {
     const inputEvent = new InputEvent('input');
     Object.defineProperty(inputEvent, 'target', {
       value: {value: '150', setSelectionRange: vi.fn()},
@@ -82,35 +65,19 @@ describe('BrCurrencyInput', () => {
 
     component['onInput'](inputEvent);
 
-    expect(onChange).toHaveBeenCalledWith(1.5);
+    expect(component.value()).toBe(1.5);
   });
 
-  it('should call onTouched on blur', () => {
-    const onTouched = vi.fn();
-    component.registerOnTouched(onTouched);
-
+  it('should set touched on blur', () => {
     component['onBlur']();
-
-    expect(onTouched).toHaveBeenCalled();
+    expect(component.touched()).toBe(true);
   });
 
-  // ────────────────────────────
-  //  setDisabledState
-  // ────────────────────────────
-
-  it('should disable the component', () => {
-    component.setDisabledState(true);
-    expect(component['isDisabled']).toBe(true);
+  it('should reflect disabled input', () => {
+    fixture.componentRef.setInput('disabled', true);
+    fixture.detectChanges();
+    expect(component.disabled()).toBe(true);
   });
-
-  it('should enable the component', () => {
-    component.setDisabledState(false);
-    expect(component['isDisabled']).toBe(false);
-  });
-
-  // ────────────────────────────
-  //  onInput
-  // ────────────────────────────
 
   it('should parse digits and format as BRL on input', () => {
     const inputEvent = new InputEvent('input');
@@ -133,6 +100,7 @@ describe('BrCurrencyInput', () => {
 
     expect(component['displayValue']()).toBe('');
     expect(component['centsValue']).toBe(0);
+    expect(component.value()).toBeNull();
   });
 
   it('should strip non-digit characters from input', () => {
@@ -146,10 +114,6 @@ describe('BrCurrencyInput', () => {
     expect(component['centsValue']).toBe(1234);
     expect(component['displayValue']()).toBe('12,34');
   });
-
-  // ────────────────────────────
-  //  onKeydown — allow / block
-  // ────────────────────────────
 
   it('should restore the cursor after input', async () => {
     const setSelectionRange = vi.fn();
@@ -242,37 +206,18 @@ describe('BrCurrencyInput', () => {
     });
   });
 
-  // ────────────────────────────
-  //  onFocus / onBlur
-  // ────────────────────────────
-
   it('should set isFocused on focus', () => {
     component['onFocus']();
     expect(component['isFocused']()).toBe(true);
   });
 
-  it('should clear isFocused and call onTouched on blur', () => {
-    const onTouched = vi.fn();
-    component.registerOnTouched(onTouched);
+  it('should clear isFocused and set touched on blur', () => {
     component['onFocus']();
     expect(component['isFocused']()).toBe(true);
 
     component['onBlur']();
     expect(component['isFocused']()).toBe(false);
-    expect(onTouched).toHaveBeenCalled();
-  });
-
-  // ────────────────────────────
-  //  Full cycle: write → edit → blur
-  // ────────────────────────────
-
-  it('should use default ControlValueAccessor stubs', () => {
-    const inputEvent = new InputEvent('input');
-    Object.defineProperty(inputEvent, 'target', {
-      value: {value: '10', setSelectionRange: vi.fn()},
-    });
-    expect(() => component['onInput'](inputEvent)).not.toThrow();
-    expect(() => component['onBlur']()).not.toThrow();
+    expect(component.touched()).toBe(true);
   });
 
   it('should handle native input events from the template', () => {
@@ -285,11 +230,12 @@ describe('BrCurrencyInput', () => {
     input.blur();
     fixture.detectChanges();
     expect(component['isFocused']()).toBe(false);
+    expect(component.value()).toBe(2.5);
   });
 
   it('should restore formatted value on blur', () => {
-    // Write a value, then simulate editing without changing, then blur
-    component.writeValue(5.0);
+    component.value.set(5.0);
+    fixture.detectChanges();
     expect(component['displayValue']()).toBe('5,00');
 
     component['onBlur']();
